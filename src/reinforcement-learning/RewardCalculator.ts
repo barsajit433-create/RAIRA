@@ -1,7 +1,7 @@
-import { DEFAULT_REWARD_WEIGHTS } from '../types/simulation';
-import type { ProcessRecord } from '../types/process';
-import type { RewardBreakdown, RewardWeights } from '../types/simulation';
-import { computeJainFairnessIndex } from '../simulation/MetricsCalculator';
+import { DEFAULT_REWARD_WEIGHTS } from '../types/simulation.ts';
+import type { ProcessRecord } from '../types/process.ts';
+import type { RewardBreakdown, RewardWeights } from '../types/simulation.ts';
+import { computeJainFairnessIndex } from '../simulation/MetricsCalculator.ts';
 
 export function emptyRewardBreakdown(): RewardBreakdown {
   return {

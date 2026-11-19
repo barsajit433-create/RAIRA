@@ -1,8 +1,8 @@
 import {
   DEFAULT_REWARD_WEIGHTS,
   SYSTEM_CONFIG,
-} from '../types/simulation';
-import type { ProcessRecord, ProcessSpec, WorkloadType } from '../types/process';
+} from '../types/simulation.ts';
+import type { ProcessRecord, ProcessSpec, WorkloadType } from '../types/process.ts';
 import type {
   AlgorithmType,
   AllocationDecision,
@@ -13,29 +13,29 @@ import type {
   SimulationStatus,
   SystemEvent,
   TickTelemetry,
-} from '../types/simulation';
-import { cloneProcessRecord, cloneProcessSpec, createProcessRecord } from './Process';
-import { ResourceManager } from './ResourceManager';
-import { calculateSimulationMetrics, computeJainFairnessIndex } from './MetricsCalculator';
+} from '../types/simulation.ts';
+import { cloneProcessRecord, cloneProcessSpec, createProcessRecord } from './Process.ts';
+import { ResourceManager } from './ResourceManager.ts';
+import { calculateSimulationMetrics, computeJainFairnessIndex } from './MetricsCalculator.ts';
 import {
   admitBlockedProcessesForBaseline,
   createBaselineSchedulerState,
   selectBaselineProcessSlot,
   type BaselineAlgorithm,
   type BaselineSchedulerState,
-} from './CpuScheduler';
+} from './CpuScheduler.ts';
 import {
   computeActionMask,
   decodeAction,
   formatActionLabel,
   WAIT_ACTION,
-} from '../reinforcement-learning/ActionSpace';
-import { encodeObservation } from '../reinforcement-learning/StateEncoder';
+} from '../reinforcement-learning/ActionSpace.ts';
+import { encodeObservation } from '../reinforcement-learning/StateEncoder.ts';
 import {
   accumulateDiscountedRewards,
   calculateTickReward,
   emptyRewardBreakdown,
-} from '../reinforcement-learning/RewardCalculator';
+} from '../reinforcement-learning/RewardCalculator.ts';
 
 export interface StepResult {
   reward: number;

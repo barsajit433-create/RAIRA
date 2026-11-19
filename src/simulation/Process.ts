@@ -1,5 +1,5 @@
-import { SYSTEM_CONFIG } from '../types/simulation';
-import type { ProcessRecord, ProcessSpec, ProcessValidationResult } from '../types/process';
+import { SYSTEM_CONFIG } from '../types/simulation.ts';
+import type { ProcessRecord, ProcessSpec, ProcessValidationResult } from '../types/process.ts';
 
 export function validateProcessInput(input: {
   name?: string;

@@ -1,5 +1,5 @@
-import { SYSTEM_CONFIG } from '../types/simulation';
-import type { ProcessRecord } from '../types/process';
+import { SYSTEM_CONFIG } from '../types/simulation.ts';
+import type { ProcessRecord } from '../types/process.ts';
 
 export const ACTION_SPACE_SIZE = SYSTEM_CONFIG.ACTION_SPACE_SIZE; // 97
 export const RL_QUANTA = SYSTEM_CONFIG.RL_QUANTA; // [1, 2, 4]

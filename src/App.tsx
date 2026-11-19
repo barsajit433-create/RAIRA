@@ -43,6 +43,7 @@ export default function App() {
 
   const lastAutoLoggedSimKey = useRef<string | null>(null);
   const lastAutoLoggedTrainKey = useRef<string | null>(null);
+  const userMutatedSimRef = useRef(false);
 
   const syncTrainingHistories = useCallback((snap: TrainingSessionSnapshot) => {
     setTraining(snap);
@@ -112,33 +113,34 @@ export default function App() {
     setExperiments(experimentStorage.addHistoryRecord(record));
   }, []);
 
-  // Initial load from backend API
+  // Initial load from backend API (simulation state hydrates immediately without waiting on TF.js DQN init)
   useEffect(() => {
     let active = true;
-    const init = async () => {
+
+    const hydrateSimulation = async () => {
       try {
-        const [simSnap, trainSnap, cmpRes] = await Promise.all([
-          rairaApi.getSimulationState(),
-          rairaApi.getTrainingStatus(),
-          rairaApi.getLatestComparison(),
-        ]);
+        const simSnap = await rairaApi.getSimulationState();
         if (!active) return;
-        setSimulation(simSnap);
-        syncTrainingHistories(trainSnap);
-        if (cmpRes.comparison) {
-          setLatestComparison(cmpRes.comparison);
+        if (!userMutatedSimRef.current) {
+          setSimulation((prev) => (prev && prev.processes.length > 0 ? prev : simSnap));
         }
 
         // Optional ?autostart=1 support for automated testing
         const params = new URLSearchParams(window.location.search);
-        if (params.get('autostart') === '1' && simSnap.processes.length === 0) {
+        if (
+          params.get('autostart') === '1' &&
+          simSnap.processes.length === 0 &&
+          !userMutatedSimRef.current
+        ) {
           const demoSnap = await rairaApi.loadWorkload({
             workloadType: 'MIXED',
             numProcesses: 10,
             seed: 42,
             algorithm: 'FCFS',
           });
-          if (active) setSimulation(demoSnap);
+          if (active && !userMutatedSimRef.current) {
+            setSimulation(demoSnap);
+          }
         }
       } catch (err) {
         if (active) {
@@ -146,7 +148,29 @@ export default function App() {
         }
       }
     };
-    void init();
+
+    const hydrateSecondary = async () => {
+      try {
+        const [trainSnap, cmpRes] = await Promise.all([
+          rairaApi.getTrainingStatus(),
+          rairaApi.getLatestComparison(),
+        ]);
+        if (!active) return;
+        syncTrainingHistories(trainSnap);
+        if (cmpRes.comparison) {
+          setLatestComparison(cmpRes.comparison);
+        }
+      } catch (err) {
+        if (active) {
+          setGlobalError(err instanceof Error ? err.message : 'Unable to initialize RL status.');
+        }
+      }
+    };
+
+    void hydrateSimulation().then(() => {
+      if (active) void hydrateSecondary();
+    });
+
     return () => {
       active = false;
     };
@@ -199,6 +223,7 @@ export default function App() {
 
   // Simulation Handlers
   const handleLaunchDemo = async () => {
+    userMutatedSimRef.current = true;
     setBusy(true);
     setGlobalError(null);
     try {

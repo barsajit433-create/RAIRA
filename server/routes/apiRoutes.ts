@@ -1,9 +1,9 @@
 import { Router } from 'express';
-import { rairaService } from '../services/rairaService';
-import { generateWorkload, WORKLOAD_SCENARIOS } from '../../src/simulation/WorkloadGenerator';
-import type { ProcessSpec, WorkloadType } from '../../src/types/process';
-import type { AlgorithmType } from '../../src/types/simulation';
-import type { RLAgentType, RLTrainingConfig } from '../../src/types/reinforcementLearning';
+import { rairaService } from '../services/rairaService.ts';
+import { generateWorkload, WORKLOAD_SCENARIOS } from '../../src/simulation/WorkloadGenerator.ts';
+import type { ProcessSpec, WorkloadType } from '../../src/types/process.ts';
+import type { AlgorithmType } from '../../src/types/simulation.ts';
+import type { RLAgentType, RLTrainingConfig } from '../../src/types/reinforcementLearning.ts';
 
 export const apiRouter = Router();
 

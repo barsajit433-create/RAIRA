@@ -1,14 +1,14 @@
-import type { WorkloadType } from '../types/process';
+import type { WorkloadType } from '../types/process.ts';
 import type {
   DQNDependencyStatus,
   RLAgentSummary,
   SerializedDQNModel,
   TrainingEpisodeMetric,
-} from '../types/reinforcementLearning';
-import { SeededRNG } from '../simulation/WorkloadGenerator';
-import { ACTION_SPACE_SIZE, getValidActionIndices, WAIT_ACTION } from './ActionSpace';
-import { OBSERVATION_SIZE } from './StateEncoder';
-import { ReplayBuffer, type ReplayTransition } from './ReplayBuffer';
+} from '../types/reinforcementLearning.ts';
+import { SeededRNG } from '../simulation/WorkloadGenerator.ts';
+import { ACTION_SPACE_SIZE, getValidActionIndices, WAIT_ACTION } from './ActionSpace.ts';
+import { OBSERVATION_SIZE } from './StateEncoder.ts';
+import { ReplayBuffer, type ReplayTransition } from './ReplayBuffer.ts';
 import {
   buildDQNModel,
   copyModelWeights,
@@ -18,7 +18,7 @@ import {
   initializeTensorFlow,
   serializeModelWeights,
   tf,
-} from './NeuralNetwork';
+} from './NeuralNetwork.ts';
 
 export interface DQNHyperparams {
   learningRate: number;

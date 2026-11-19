@@ -1,16 +1,16 @@
-import type { WorkloadType } from '../types/process';
+import type { WorkloadType } from '../types/process.ts';
 import type {
   RLAgentType,
   RLTrainingConfig,
   TrainingEpisodeMetric,
   TrainingRunState,
   TrainingSessionSnapshot,
-} from '../types/reinforcementLearning';
-import { DEFAULT_REWARD_WEIGHTS, SYSTEM_CONFIG } from '../types/simulation';
-import { SimulationEngine } from '../simulation/SimulationEngine';
-import { generateWorkload } from '../simulation/WorkloadGenerator';
-import { QLearningAgent } from './QLearningAgent';
-import { DQNAgent } from './DQNAgent';
+} from '../types/reinforcementLearning.ts';
+import { DEFAULT_REWARD_WEIGHTS, SYSTEM_CONFIG } from '../types/simulation.ts';
+import { SimulationEngine } from '../simulation/SimulationEngine.ts';
+import { generateWorkload } from '../simulation/WorkloadGenerator.ts';
+import { QLearningAgent } from './QLearningAgent.ts';
+import { DQNAgent } from './DQNAgent.ts';
 
 export class TrainingEngine {
   readonly qAgent: QLearningAgent;

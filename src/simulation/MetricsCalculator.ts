@@ -1,6 +1,6 @@
-import { SYSTEM_CONFIG } from '../types/simulation';
-import type { ProcessRecord } from '../types/process';
-import type { SimulationMetrics } from '../types/simulation';
+import { SYSTEM_CONFIG } from '../types/simulation.ts';
+import type { ProcessRecord } from '../types/process.ts';
+import type { SimulationMetrics } from '../types/simulation.ts';
 
 /**
  * Compute Jain's Fairness Index over normalized waiting-to-burst ratios.

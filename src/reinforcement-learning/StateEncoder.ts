@@ -1,6 +1,6 @@
-import { SYSTEM_CONFIG } from '../types/simulation';
-import type { ProcessRecord, ProcessStatus } from '../types/process';
-import { decodeAction, WAIT_ACTION } from './ActionSpace';
+import { SYSTEM_CONFIG } from '../types/simulation.ts';
+import type { ProcessRecord, ProcessStatus } from '../types/process.ts';
+import { decodeAction, WAIT_ACTION } from './ActionSpace.ts';
 
 export const OBSERVATION_SIZE = SYSTEM_CONFIG.OBSERVATION_SIZE; // 6 + 32 * 8 = 262
 const GLOBAL_FEATURES = 6;

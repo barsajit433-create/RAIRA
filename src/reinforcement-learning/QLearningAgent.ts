@@ -1,12 +1,12 @@
-import type { ProcessRecord, WorkloadType } from '../types/process';
+import type { ProcessRecord, WorkloadType } from '../types/process.ts';
 import type {
   RLAgentSummary,
   SerializedQLearningModel,
   TrainingEpisodeMetric,
-} from '../types/reinforcementLearning';
-import { SeededRNG } from '../simulation/WorkloadGenerator';
-import { getValidActionIndices, WAIT_ACTION } from './ActionSpace';
-import { encodeCandidateStateActionKey, encodeCompactStateKey } from './StateEncoder';
+} from '../types/reinforcementLearning.ts';
+import { SeededRNG } from '../simulation/WorkloadGenerator.ts';
+import { getValidActionIndices, WAIT_ACTION } from './ActionSpace.ts';
+import { encodeCandidateStateActionKey, encodeCompactStateKey } from './StateEncoder.ts';
 
 export interface QLearningHyperparams {
   learningRate: number;

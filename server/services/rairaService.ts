@@ -1,24 +1,24 @@
-import { DEFAULT_REWARD_WEIGHTS, SYSTEM_CONFIG } from '../../src/types/simulation';
-import type { ProcessSpec, WorkloadType } from '../../src/types/process';
-import type { AlgorithmType, RewardWeights, SimulationSnapshot } from '../../src/types/simulation';
+import { DEFAULT_REWARD_WEIGHTS, SYSTEM_CONFIG } from '../../src/types/simulation.ts';
+import type { ProcessSpec, WorkloadType } from '../../src/types/process.ts';
+import type { AlgorithmType, RewardWeights, SimulationSnapshot } from '../../src/types/simulation.ts';
 import type {
   AlgorithmBenchmarkResult,
   SeedComparisonBatch,
-} from '../../src/types/experiment';
+} from '../../src/types/experiment.ts';
 import type {
   RLAgentType,
   RLTrainingConfig,
   SerializedDQNModel,
   SerializedQLearningModel,
   TrainingSessionSnapshot,
-} from '../../src/types/reinforcementLearning';
-import { SimulationEngine } from '../../src/simulation/SimulationEngine';
-import { generateWorkload } from '../../src/simulation/WorkloadGenerator';
-import { formatProcessId, validateProcessInput } from '../../src/simulation/Process';
-import { QLearningAgent } from '../../src/reinforcement-learning/QLearningAgent';
-import { DQNAgent } from '../../src/reinforcement-learning/DQNAgent';
-import { TrainingEngine } from '../../src/reinforcement-learning/TrainingEngine';
-import type { BaselineAlgorithm } from '../../src/simulation/CpuScheduler';
+} from '../../src/types/reinforcementLearning.ts';
+import { SimulationEngine } from '../../src/simulation/SimulationEngine.ts';
+import { generateWorkload } from '../../src/simulation/WorkloadGenerator.ts';
+import { formatProcessId, validateProcessInput } from '../../src/simulation/Process.ts';
+import { QLearningAgent } from '../../src/reinforcement-learning/QLearningAgent.ts';
+import { DQNAgent } from '../../src/reinforcement-learning/DQNAgent.ts';
+import { TrainingEngine } from '../../src/reinforcement-learning/TrainingEngine.ts';
+import type { BaselineAlgorithm } from '../../src/simulation/CpuScheduler.ts';
 
 export class RairaBackendService {
   readonly simulation: SimulationEngine;

@@ -1,6 +1,6 @@
-import type { ProcessRecord } from '../types/process';
-import type { AlgorithmType } from '../types/simulation';
-import { ResourceManager } from './ResourceManager';
+import type { ProcessRecord } from '../types/process.ts';
+import type { AlgorithmType } from '../types/simulation.ts';
+import { ResourceManager } from './ResourceManager.ts';
 
 export type BaselineAlgorithm = Extract<AlgorithmType, 'FCFS' | 'RR' | 'PRIORITY'>;
 

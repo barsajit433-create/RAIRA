@@ -1,6 +1,6 @@
 import * as tf from '@tensorflow/tfjs';
-import { SYSTEM_CONFIG } from '../types/simulation';
-import type { DQNDependencyStatus } from '../types/reinforcementLearning';
+import { SYSTEM_CONFIG } from '../types/simulation.ts';
+import type { DQNDependencyStatus } from '../types/reinforcementLearning.ts';
 
 export const DQN_ARCHITECTURE = {
   inputDim: SYSTEM_CONFIG.OBSERVATION_SIZE, // 262
@@ -13,13 +13,18 @@ let tfReadyPromise: Promise<DQNDependencyStatus> | null = null;
 
 /**
  * Ensures TensorFlow.js is initialized cleanly (preferring CPU backend on Node.js
- * or available backend in browser). Never fabricates availability if TF.js fails.
+ * or available backend in browser, with safe CPU fallback if WebGL fails).
  */
 export async function initializeTensorFlow(): Promise<DQNDependencyStatus> {
   if (!tfReadyPromise) {
     tfReadyPromise = (async () => {
       try {
-        await tf.ready();
+        try {
+          await tf.ready();
+        } catch {
+          await tf.setBackend('cpu');
+          await tf.ready();
+        }
         const backend = tf.getBackend();
         if (!backend) {
           await tf.setBackend('cpu');

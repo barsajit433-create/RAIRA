@@ -1,6 +1,6 @@
-import { SYSTEM_CONFIG } from '../types/simulation';
-import type { ProcessSpec, WorkloadType } from '../types/process';
-import { formatProcessId } from './Process';
+import { SYSTEM_CONFIG } from '../types/simulation.ts';
+import type { ProcessSpec, WorkloadType } from '../types/process.ts';
+import { formatProcessId } from './Process.ts';
 
 export class SeededRNG {
   private state: number;

@@ -1,5 +1,5 @@
-import { SYSTEM_CONFIG } from '../types/simulation';
-import type { ProcessRecord } from '../types/process';
+import { SYSTEM_CONFIG } from '../types/simulation.ts';
+import type { ProcessRecord } from '../types/process.ts';
 
 export class ResourceManager {
   readonly totalRamMb: number;

@@ -1,4 +1,4 @@
-import { SeededRNG } from '../simulation/WorkloadGenerator';
+import { SeededRNG } from '../simulation/WorkloadGenerator.ts';
 
 export interface ReplayTransition {
   state: Float32Array;
