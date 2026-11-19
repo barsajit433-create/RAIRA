@@ -1,0 +1,6 @@
+{
+  "name": "RAIRA",
+  "description": "Reinforcement Learning-based Adaptive Intelligent Resource Allocator — discrete-time OS CPU/RAM scheduling simulator with FCFS, Round Robin, Priority, Tabular Q-Learning, and TensorFlow.js DQN.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
