@@ -4,9 +4,11 @@ import {
   BarChart3,
   BookOpen,
   BrainCircuit,
+  Compass,
   Cpu,
   Flame,
   History,
+  Home,
   LayoutDashboard,
   ListChecks,
   Palette,
@@ -154,6 +156,8 @@ interface SidebarProps {
   onToggleCollapse: () => void;
   mobileOpen: boolean;
   onCloseMobile: () => void;
+  onOpenWelcome: () => void;
+  onRestartTour: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -163,6 +167,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
   mobileOpen,
   onCloseMobile,
+  onOpenWelcome,
+  onRestartTour,
 }) => {
   const handleSelect = (id: NavPageId) => {
     onNavigate(id);
@@ -201,7 +207,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   className="font-mono text-xs font-semibold"
                   style={{ color: 'var(--accent-text)' }}
                 >
-                  2.1
+                  2.2
                 </span>
               </div>
               <div className="text-[11px] text-[var(--text-muted)] truncate">
@@ -291,6 +297,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
       </nav>
+
+      {/* Welcome & Guided Tour Quick Access */}
+      <div
+        className="px-2.5 py-2 border-t space-y-1"
+        style={{ borderColor: 'var(--border-subtle)' }}
+      >
+        <button
+          type="button"
+          data-testid="sidebar-welcome-btn"
+          onClick={() => {
+            onCloseMobile();
+            onOpenWelcome();
+          }}
+          title={collapsed ? 'Welcome Screen' : undefined}
+          className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] transition-colors whitespace-nowrap cursor-pointer"
+        >
+          <Home className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          {!collapsed && <span className="truncate">Welcome Screen</span>}
+        </button>
+
+        <button
+          type="button"
+          data-testid="sidebar-tour-btn"
+          onClick={() => {
+            onCloseMobile();
+            onRestartTour();
+          }}
+          title={collapsed ? 'Guided Tour' : undefined}
+          className="w-full flex items-center gap-3 px-3 py-1.5 rounded-lg text-xs font-medium text-[var(--text-muted)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] transition-colors whitespace-nowrap cursor-pointer"
+        >
+          <Compass className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          {!collapsed && <span className="truncate">Guided Tour</span>}
+        </button>
+      </div>
 
       {/* Hardware Envelope Summary */}
       {!collapsed && (

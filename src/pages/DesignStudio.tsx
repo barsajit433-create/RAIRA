@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import {
   Check,
   Columns2,
+  Compass,
+  HardDrive,
+  Home,
   Maximize2,
   Minimize2,
   Moon,
@@ -34,6 +37,8 @@ interface DesignStudioProps {
   simulation: SimulationSnapshot | null;
   busy: boolean;
   onLaunchDemo: () => void;
+  onOpenWelcome: () => void;
+  onRestartTour: () => void;
 }
 
 const ThemeMiniaturePreview: React.FC<{ theme: ThemeDefinition }> = ({ theme }) => {
@@ -253,6 +258,8 @@ export const DesignStudio: React.FC<DesignStudioProps> = ({
   simulation,
   busy,
   onLaunchDemo,
+  onOpenWelcome,
+  onRestartTour,
 }) => {
   const {
     settings,
@@ -838,6 +845,51 @@ export const DesignStudio: React.FC<DesignStudioProps> = ({
               </AreaChart>
             </ResponsiveContainer>
           )}
+        </div>
+      </section>
+
+      {/* Guest Access & Guided Onboarding */}
+      <section
+        aria-labelledby="guest-onboarding-heading"
+        className="raira-card raira-card-pad flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+      >
+        <div className="space-y-1.5 min-w-0">
+          <div className="flex items-center gap-2 text-xs font-mono text-[var(--accent-text)]">
+            <HardDrive className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>Guest Mode &amp; Local Workspace</span>
+          </div>
+          <h3
+            id="guest-onboarding-heading"
+            className="font-display text-sm font-semibold text-[var(--text-primary)]"
+          >
+            Welcome Experience &amp; Guided Tour
+          </h3>
+          <p className="text-xs text-[var(--text-muted)] max-w-2xl leading-relaxed">
+            RAIRA runs in open Guest Mode with full access to every simulator, RL agent, and
+            research lab. Your experiments, model runs, and visual preferences are stored locally
+            in this browser. Reopen the Welcome Screen or restart the 6-step Guided Tour anytime.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            data-testid="settings-open-welcome-btn"
+            onClick={onOpenWelcome}
+            className="raira-btn-secondary inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold whitespace-nowrap cursor-pointer"
+          >
+            <Home className="h-3.5 w-3.5 text-[var(--accent-text)]" aria-hidden="true" />
+            <span>Reopen Welcome Screen</span>
+          </button>
+          <button
+            type="button"
+            data-testid="settings-restart-tour-btn"
+            onClick={onRestartTour}
+            className="raira-btn-primary inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold whitespace-nowrap cursor-pointer"
+          >
+            <Compass className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Restart Guided Tour</span>
+          </button>
         </div>
       </section>
     </div>

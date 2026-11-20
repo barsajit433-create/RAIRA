@@ -141,7 +141,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           {simulation && (
             <div className="hidden xl:flex items-center gap-2 text-xs text-[var(--text-muted)] font-mono tabular-nums">
               <span className="text-[var(--text-secondary)]">
@@ -166,6 +166,37 @@ export const Header: React.FC<HeaderProps> = ({
               </span>
             </div>
           )}
+
+          {/* Neutral Guest Mode Indicator with accessible tooltip */}
+          <div className="relative group">
+            <span
+              data-testid="guest-mode-label"
+              tabIndex={0}
+              role="note"
+              title="Your experiments and preferences are stored locally in this browser."
+              aria-label="Guest Mode: Your experiments and preferences are stored locally in this browser."
+              className="inline-flex items-center rounded-md border px-2 py-1 text-[10px] font-mono font-medium uppercase tracking-[0.1em] whitespace-nowrap shrink-0 select-none transition-colors cursor-default"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                backgroundColor: 'var(--surface-subtle)',
+                color: 'var(--text-muted)',
+              }}
+            >
+              GUEST MODE
+            </span>
+            <div
+              role="tooltip"
+              data-testid="guest-mode-tooltip"
+              className="pointer-events-none absolute right-0 top-full mt-2 w-64 rounded-lg border px-3 py-2 text-[11px] leading-relaxed shadow-lg opacity-0 translate-y-0.5 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 z-40"
+              style={{
+                backgroundColor: 'var(--surface-card)',
+                borderColor: 'var(--border-strong)',
+                color: 'var(--text-secondary)',
+              }}
+            >
+              Your experiments and preferences are stored locally in this browser.
+            </div>
+          </div>
 
           {activePage !== 'design-studio' && (
             <button

@@ -22,10 +22,31 @@ import { ResearchAnalytics } from './pages/ResearchAnalytics';
 import { ExperimentHistory } from './pages/ExperimentHistory';
 import { ProjectInformation } from './pages/ProjectInformation';
 import { DesignStudio } from './pages/DesignStudio';
+import { WelcomeScreen } from './components/WelcomeScreen';
+import { OnboardingTourModal } from './components/OnboardingTourModal';
+import {
+  guestSessionStorage,
+  markEnteredAsGuest,
+  markTourCompleted,
+  markTourSkipped,
+  shouldShowWelcomeOnLoad,
+  type GuestSessionState,
+} from './services/guestSession';
 import { useTheme } from './theme/ThemeContext';
 
 export default function App() {
   const { settings, updateSettings } = useTheme();
+  const [guestSession, setGuestSession] = useState<GuestSessionState>(() =>
+    guestSessionStorage.load()
+  );
+  const [showWelcome, setShowWelcome] = useState<boolean>(() => {
+    const initialSession = guestSessionStorage.load();
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    return shouldShowWelcomeOnLoad(initialSession, search);
+  });
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourStepIndex, setTourStepIndex] = useState(0);
+
   const [activePage, setActivePage] = useState<NavPageId>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const sidebarCollapsed = settings.sidebarCollapsed;
@@ -386,6 +407,67 @@ export default function App() {
     experimentStorage.saveValidationReport(report);
   };
 
+  // Guest-First Welcome & Guided Tour Handlers
+  const handleLaunchGuest = useCallback(() => {
+    const updated = guestSessionStorage.save(markEnteredAsGuest(guestSession));
+    setGuestSession(updated);
+    setShowWelcome(false);
+    setTourOpen(false);
+    setActivePage('overview');
+  }, [guestSession]);
+
+  const handleExploreTour = useCallback(() => {
+    const updated = guestSessionStorage.save(markEnteredAsGuest(guestSession));
+    setGuestSession(updated);
+    setShowWelcome(false);
+    setActivePage('overview');
+    setTourStepIndex(0);
+    setTourOpen(true);
+  }, [guestSession]);
+
+  const handleSkipTour = useCallback(() => {
+    const updated = guestSessionStorage.save(markTourSkipped(guestSession));
+    setGuestSession(updated);
+    setTourOpen(false);
+  }, [guestSession]);
+
+  const handleCompleteTour = useCallback(() => {
+    const updated = guestSessionStorage.save(markTourCompleted(guestSession));
+    setGuestSession(updated);
+    setTourOpen(false);
+    setActivePage('overview');
+  }, [guestSession]);
+
+  const handleCompleteTourAndLaunchDemo = useCallback(async () => {
+    const updated = guestSessionStorage.save(markTourCompleted(guestSession));
+    setGuestSession(updated);
+    setTourOpen(false);
+    setActivePage('simulation');
+    await handleLaunchDemo();
+  }, [guestSession]);
+
+  const handleReopenWelcome = useCallback(() => {
+    setTourOpen(false);
+    setShowWelcome(true);
+  }, []);
+
+  const handleRestartTour = useCallback(() => {
+    setShowWelcome(false);
+    setTourStepIndex(0);
+    setTourOpen(true);
+  }, []);
+
+  if (showWelcome) {
+    return (
+      <WelcomeScreen
+        onLaunchGuest={handleLaunchGuest}
+        onExploreTour={handleExploreTour}
+        savedExperimentCount={experiments.length}
+        isReturningUser={guestSession.hasEnteredApp}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen flex text-[var(--text-primary)]">
       <Sidebar
@@ -395,6 +477,8 @@ export default function App() {
         onToggleCollapse={toggleSidebarCollapsed}
         mobileOpen={mobileMenuOpen}
         onCloseMobile={() => setMobileMenuOpen(false)}
+        onOpenWelcome={handleReopenWelcome}
+        onRestartTour={handleRestartTour}
       />
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -549,10 +633,23 @@ export default function App() {
               simulation={simulation}
               busy={busy}
               onLaunchDemo={handleLaunchDemo}
+              onOpenWelcome={handleReopenWelcome}
+              onRestartTour={handleRestartTour}
             />
           )}
         </main>
       </div>
+
+      <OnboardingTourModal
+        open={tourOpen}
+        stepIndex={tourStepIndex}
+        onChangeStep={setTourStepIndex}
+        onNavigatePreview={setActivePage}
+        onSkip={handleSkipTour}
+        onComplete={handleCompleteTour}
+        onCompleteAndLaunchDemo={handleCompleteTourAndLaunchDemo}
+        demoLoading={busy}
+      />
     </div>
   );
 }
