@@ -4,6 +4,10 @@ import { generateWorkload, WORKLOAD_SCENARIOS } from '../../src/simulation/Workl
 import type { ProcessSpec, WorkloadType } from '../../src/types/process.ts';
 import type { AlgorithmType } from '../../src/types/simulation.ts';
 import type { RLAgentType, RLTrainingConfig } from '../../src/types/reinforcementLearning.ts';
+import type {
+  ShockScenarioConfig,
+  StatisticalValidationConfig,
+} from '../../src/types/intelligence.ts';
 
 export const apiRouter = Router();
 
@@ -95,6 +99,10 @@ apiRouter.post('/simulation/config', (req, res) => {
       stepIntervalMs:
         req.body?.stepIntervalMs !== undefined ? Number(req.body.stepIntervalMs) : undefined,
       rewardWeights: req.body?.rewardWeights,
+      starvationThreshold:
+        req.body?.starvationThreshold !== undefined
+          ? Number(req.body.starvationThreshold)
+          : undefined,
     });
     res.json(snapshot);
   } catch (err) {
@@ -245,6 +253,63 @@ apiRouter.post('/comparison/run', async (req, res) => {
     });
 
     res.json(batch);
+  } catch (err) {
+    res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+// ---- RAIRA 2.0: Counterfactual What-If Laboratory ----
+apiRouter.get('/counterfactual/latest', (_req, res) => {
+  res.json({ report: rairaService.getLastCounterfactual() });
+});
+
+apiRouter.post('/counterfactual/run', async (req, res) => {
+  try {
+    const rawHorizon = req.body?.horizonTicks;
+    const horizonTicks: number | 'FULL_EPISODE' =
+      rawHorizon === 'FULL_EPISODE' ? 'FULL_EPISODE' : Math.max(1, Number(rawHorizon ?? 20));
+    const rlReferenceAgent = req.body?.rlReferenceAgent as 'Q_LEARNING' | 'DQN' | undefined;
+    const alternativeActionId =
+      req.body?.alternativeActionId !== undefined && req.body?.alternativeActionId !== null
+        ? Number(req.body.alternativeActionId)
+        : null;
+
+    const report = await rairaService.runCounterfactual({
+      horizonTicks,
+      rlReferenceAgent,
+      alternativeActionId,
+    });
+    res.json(report);
+  } catch (err) {
+    res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+// ---- RAIRA 2.0: Workload Shock Arena ----
+apiRouter.get('/shock/latest', (_req, res) => {
+  res.json({ report: rairaService.getLastShockReport() });
+});
+
+apiRouter.post('/shock/run', async (req, res) => {
+  try {
+    const config = req.body as ShockScenarioConfig;
+    const report = await rairaService.runShockArena(config);
+    res.json(report);
+  } catch (err) {
+    res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+// ---- RAIRA 2.0: Statistical Research Validation Laboratory ----
+apiRouter.get('/validation/latest', (_req, res) => {
+  res.json({ report: rairaService.getLastValidationReport() });
+});
+
+apiRouter.post('/validation/run', async (req, res) => {
+  try {
+    const config = req.body as StatisticalValidationConfig;
+    const report = await rairaService.runStatisticalValidationSuite(config);
+    res.json(report);
   } catch (err) {
     res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
   }

@@ -58,18 +58,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const dqnSummary = training?.dqnSummary;
 
   return (
-    <div className="space-y-6">
+    <div className="raira-section-stack">
       {/* Clean Initial Launch Banner when no workload is loaded */}
       {!hasProcesses && (
-        <section className="rounded-xl border border-cyan-500/30 bg-[#0B1426] p-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+        <section
+          className="raira-card raira-card-pad flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5"
+          style={{ borderColor: 'var(--accent-border)' }}
+        >
           <div className="space-y-2 max-w-2xl">
-            <div className="text-xs font-mono text-cyan-400">
+            <div className="text-xs font-mono text-[var(--accent-text)]">
               RAIRA Research Environment Ready
             </div>
-            <h2 className="font-display text-xl sm:text-2xl font-bold text-slate-100">
+            <h2 className="font-display text-xl sm:text-2xl font-bold text-[var(--text-primary)]">
               Intelligent Resource Allocation Using Reinforcement Learning
             </h2>
-            <p className="text-sm text-slate-300 leading-relaxed">
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
               The simulator is initialized in a clean state with zero fabricated metrics. Launch a
               deterministic 10-process Mixed workload (seed 42) to explore live CPU &amp; RAM
               scheduling immediately, or configure custom processes and train RL policies.
@@ -80,7 +83,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               type="button"
               onClick={onLaunchDemo}
               disabled={busy}
-              className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50 transition-colors whitespace-nowrap cursor-pointer"
+              className="raira-btn-primary inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold disabled:opacity-50 whitespace-nowrap cursor-pointer"
             >
               <Play className="h-4 w-4" aria-hidden="true" />
               <span>Launch Demo Workload</span>
@@ -88,7 +91,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('processes')}
-              className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer"
+              className="raira-btn-secondary inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium whitespace-nowrap cursor-pointer"
             >
               <span>Create Custom Workload</span>
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -98,7 +101,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
       )}
 
       {/* Top 6 KPI Cards */}
-      <section aria-label="Key Performance Indicators" className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+      <section
+        aria-label="Key Performance Indicators"
+        className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4"
+      >
         <MetricCard
           label="CPU Utilisation"
           value={metrics ? metrics.avgCpuUtilisation.toFixed(1) : '0.0'}
@@ -167,7 +173,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </section>
 
       {/* Control Strip */}
-      <section className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-4 flex flex-col xl:flex-row xl:items-end justify-between gap-4">
+      <section className="raira-card p-4 flex flex-col xl:flex-row xl:items-end justify-between gap-4">
         <AlgorithmSelector
           value={simulation?.algorithm ?? 'FCFS'}
           onChange={onChangeAlgorithm}
@@ -207,28 +213,32 @@ export const Dashboard: React.FC<DashboardProps> = ({
         />
 
         {/* Workload & RL Agent Status Card */}
-        <div className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5 flex flex-col justify-between gap-4">
+        <div className="raira-card raira-card-pad flex flex-col justify-between gap-4">
           <div>
-            <h3 className="font-display text-sm font-semibold text-slate-100">
+            <h3 className="font-display text-sm font-semibold text-[var(--text-primary)]">
               Workload &amp; RL Agent Status
             </h3>
-            <p className="text-xs text-slate-400">Live environment configuration and agent readiness</p>
+            <p className="text-xs text-[var(--text-muted)]">
+              Live environment configuration and agent readiness
+            </p>
           </div>
 
           <dl className="space-y-2.5 text-xs">
             <div className="flex items-center justify-between gap-2">
-              <dt className="text-slate-400">Active Workload</dt>
-              <dd className="font-mono text-slate-200">
+              <dt className="text-[var(--text-muted)]">Active Workload</dt>
+              <dd className="font-mono text-[var(--text-primary)]">
                 {simulation && hasProcesses
                   ? `${formatWorkloadName(simulation.workloadType)} (Seed ${simulation.seed})`
                   : 'None loaded'}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <dt className="text-slate-400">Tabular Q-Learning</dt>
+              <dt className="text-[var(--text-muted)]">Tabular Q-Learning</dt>
               <dd
                 className={`font-mono ${
-                  qSummary?.isTrained ? 'text-emerald-400' : 'text-amber-400'
+                  qSummary?.isTrained
+                    ? 'text-emerald-700 dark:text-emerald-400'
+                    : 'text-amber-700 dark:text-amber-400'
                 }`}
               >
                 {qSummary?.isTrained
@@ -237,14 +247,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </dd>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <dt className="text-slate-400">TensorFlow.js DQN</dt>
+              <dt className="text-[var(--text-muted)]">TensorFlow.js DQN</dt>
               <dd
                 className={`font-mono ${
                   dqnSummary?.dqnStatus?.available === false
-                    ? 'text-red-400'
+                    ? 'text-red-700 dark:text-red-400'
                     : dqnSummary?.isTrained
-                      ? 'text-emerald-400'
-                      : 'text-amber-400'
+                      ? 'text-emerald-700 dark:text-emerald-400'
+                      : 'text-amber-700 dark:text-amber-400'
                 }`}
               >
                 {dqnSummary?.dqnStatus?.available === false
@@ -255,32 +265,35 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </dd>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <dt className="text-slate-400">Jain Fairness Index</dt>
-              <dd className="font-mono tabular-nums text-slate-200">
+              <dt className="text-[var(--text-muted)]">Jain Fairness Index</dt>
+              <dd className="font-mono tabular-nums text-[var(--text-primary)]">
                 {metrics ? metrics.jainFairnessIndex.toFixed(4) : '1.0000'}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-2">
-              <dt className="text-slate-400">Episode Reward</dt>
-              <dd className="font-mono tabular-nums text-cyan-300">
+              <dt className="text-[var(--text-muted)]">Episode Reward</dt>
+              <dd className="font-mono tabular-nums text-[var(--accent-text)] font-medium">
                 {metrics ? metrics.totalEpisodeReward.toFixed(2) : '0.00'}
               </dd>
             </div>
           </dl>
 
-          <div className="flex items-center gap-2 pt-3 border-t border-slate-800/70">
+          <div
+            className="flex items-center gap-2 pt-3 border-t"
+            style={{ borderColor: 'var(--border-subtle)' }}
+          >
             <button
               type="button"
               onClick={() => onNavigate('training')}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+              className="raira-btn-secondary flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium cursor-pointer"
             >
-              <Sparkles className="h-3.5 w-3.5 text-cyan-400" aria-hidden="true" />
+              <Sparkles className="h-3.5 w-3.5 text-[var(--accent-text)]" aria-hidden="true" />
               <span>Open RL Training</span>
             </button>
             <button
               type="button"
               onClick={() => onNavigate('comparison')}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+              className="raira-btn-secondary flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium cursor-pointer"
             >
               <span>Compare All 5</span>
             </button>
@@ -295,17 +308,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-display text-base font-semibold text-slate-100">
+            <h2 className="font-display text-base font-semibold text-[var(--text-primary)]">
               Process Execution Table
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[var(--text-muted)]">
               Real-time state of all process slots in the current episode
             </p>
           </div>
           <button
             type="button"
             onClick={() => onNavigate('processes')}
-            className="text-xs font-medium text-cyan-400 hover:text-cyan-300 transition-colors cursor-pointer"
+            className="text-xs font-medium text-[var(--accent-text)] hover:underline transition-colors cursor-pointer"
           >
             Manage processes →
           </button>
@@ -316,33 +329,42 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Decisions, Recent Experiments, and System Event Log */}
       <section className="grid grid-cols-1 xl:grid-cols-3 gap-5">
         {/* Latest Allocation Decisions */}
-        <div className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5 flex flex-col">
-          <h3 className="font-display text-sm font-semibold text-slate-100">
+        <div className="raira-card raira-card-pad flex flex-col">
+          <h3 className="font-display text-sm font-semibold text-[var(--text-primary)]">
             Latest Allocation Decisions
           </h3>
-          <p className="text-xs text-slate-400 mb-3">
+          <p className="text-xs text-[var(--text-muted)] mb-3">
             Per-step scheduling actions and discounted reward
           </p>
-          <div className="flex-1 overflow-y-auto max-h-64 divide-y divide-slate-800/60">
+          <div
+            className="flex-1 overflow-y-auto max-h-64 divide-y"
+            style={{ borderColor: 'var(--border-subtle)' }}
+          >
             {!simulation || simulation.recentDecisions.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-500">
+              <div className="raira-empty-state py-8 px-4 text-center text-xs">
                 No scheduling decisions executed yet.
               </div>
             ) : (
               simulation.recentDecisions.slice(0, 12).map((d, idx) => (
-                <div key={`${d.tick}-${idx}`} className="py-2.5 flex items-center justify-between gap-2 text-xs">
+                <div
+                  key={`${d.tick}-${idx}`}
+                  className="py-2.5 flex items-center justify-between gap-2 text-xs"
+                  style={{ borderColor: 'var(--border-subtle)' }}
+                >
                   <div className="min-w-0">
-                    <div className="font-mono text-slate-200 truncate">
+                    <div className="font-mono text-[var(--text-primary)] truncate">
                       t={d.tick} · {d.actionLabel}
                     </div>
-                    <div className="text-[11px] text-slate-500 truncate">
+                    <div className="text-[11px] text-[var(--text-muted)] truncate">
                       {d.admittedFromBlocked ? `Admitted (+${d.ramAllocatedMb} MB) · ` : ''}
                       {d.completed ? 'Completed' : d.preempted ? 'Preempted' : `${d.elapsedTicks}t`}
                     </div>
                   </div>
                   <span
-                    className={`font-mono tabular-nums shrink-0 ${
-                      d.reward >= 0 ? 'text-emerald-400' : 'text-amber-400'
+                    className={`font-mono tabular-nums shrink-0 font-medium ${
+                      d.reward >= 0
+                        ? 'text-emerald-700 dark:text-emerald-400'
+                        : 'text-amber-700 dark:text-amber-400'
                     }`}
                   >
                     {d.reward >= 0 ? '+' : ''}
@@ -355,40 +377,46 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Recent Experiment Results (real localStorage only) */}
-        <div className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5 flex flex-col">
+        <div className="raira-card raira-card-pad flex flex-col">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="font-display text-sm font-semibold text-slate-100">
+              <h3 className="font-display text-sm font-semibold text-[var(--text-primary)]">
                 Recent Experiment Results
               </h3>
-              <p className="text-xs text-slate-400">Completed runs saved in localStorage</p>
+              <p className="text-xs text-[var(--text-muted)]">
+                Completed runs saved in localStorage
+              </p>
             </div>
             <button
               type="button"
               onClick={() => onNavigate('history')}
-              className="text-xs text-cyan-400 hover:text-cyan-300 cursor-pointer"
+              className="text-xs font-medium text-[var(--accent-text)] hover:underline cursor-pointer"
             >
               View all
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto max-h-64 divide-y divide-slate-800/60">
+          <div className="flex-1 overflow-y-auto max-h-64 divide-y">
             {recentExperiments.length === 0 ? (
-              <div className="py-8 text-center text-xs text-slate-500">
+              <div className="raira-empty-state py-8 px-4 text-center text-xs">
                 No completed experiments recorded yet. Run a simulation, RL training session, or
                 algorithm comparison to log verified results.
               </div>
             ) : (
               recentExperiments.slice(0, 8).map((exp) => (
-                <div key={exp.id} className="py-2.5 flex items-center justify-between gap-2 text-xs">
+                <div
+                  key={exp.id}
+                  className="py-2.5 flex items-center justify-between gap-2 text-xs"
+                  style={{ borderColor: 'var(--border-subtle)' }}
+                >
                   <div className="min-w-0">
-                    <div className="font-medium text-slate-200 truncate">
+                    <div className="font-medium text-[var(--text-primary)] truncate">
                       {formatAlgorithmName(exp.algorithm)} · {formatWorkloadName(exp.workloadType)}
                     </div>
-                    <div className="text-[11px] text-slate-500 font-mono tabular-nums">
+                    <div className="text-[11px] text-[var(--text-muted)] font-mono tabular-nums">
                       Seed {exp.seed} · WT {exp.avgWaitingTime}t · {formatDateTime(exp.timestamp)}
                     </div>
                   </div>
-                  <span className="font-mono tabular-nums text-cyan-300 shrink-0">
+                  <span className="font-mono tabular-nums text-[var(--accent-text)] font-medium shrink-0">
                     R={exp.reward.toFixed(1)}
                   </span>
                 </div>
@@ -398,29 +426,31 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* System Event Log */}
-        <div className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5 flex flex-col">
-          <h3 className="font-display text-sm font-semibold text-slate-100">System Event Log</h3>
-          <p className="text-xs text-slate-400 mb-3">
+        <div className="raira-card raira-card-pad flex flex-col">
+          <h3 className="font-display text-sm font-semibold text-[var(--text-primary)]">
+            System Event Log
+          </h3>
+          <p className="text-xs text-[var(--text-muted)] mb-3">
             Kernel admission, preemption, completion, and violation events
           </p>
           <div className="flex-1 overflow-y-auto max-h-64 space-y-2 font-mono text-[11px]">
             {!simulation || simulation.eventLog.length === 0 ? (
-              <div className="py-8 text-center text-xs font-sans text-slate-500">
+              <div className="raira-empty-state py-8 px-4 text-center text-xs font-sans">
                 Event log is empty. Load a workload to observe kernel transitions.
               </div>
             ) : (
               simulation.eventLog.slice(0, 25).map((ev) => (
                 <div key={ev.id} className="flex items-start gap-2 leading-relaxed">
-                  <span className="text-slate-500 shrink-0 tabular-nums">t={ev.tick}</span>
+                  <span className="text-[var(--text-muted)] shrink-0 tabular-nums">t={ev.tick}</span>
                   <span
                     className={
                       ev.level === 'error'
-                        ? 'text-red-400'
+                        ? 'text-red-700 dark:text-red-400'
                         : ev.level === 'warning'
-                          ? 'text-amber-400'
+                          ? 'text-amber-700 dark:text-amber-400'
                           : ev.level === 'success'
-                            ? 'text-emerald-400'
-                            : 'text-slate-300'
+                            ? 'text-emerald-700 dark:text-emerald-400'
+                            : 'text-[var(--text-secondary)]'
                     }
                   >
                     {ev.message}

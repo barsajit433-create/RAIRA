@@ -1,0 +1,8 @@
+policy_key,algorithm,label,is_trained_model,n_episodes,wait_mean,wait_sd,wait_ci95_low,wait_ci95_high,wait_median,wait_p95,turnaround_mean,turnaround_sd,cpu_util_mean,ram_util_mean,throughput_mean,jain_fairness_mean,service_share_fairness_mean,episode_reward_mean,episode_reward_sd,invalid_actions_total,starvation_events_total
+FCFS,FCFS,FCFS,true,120,53.67,27.38,48.72,58.61,41.15,108.63,67.6,32.82,99.83,64.71,8.15,0.6338,0.8008,255.05,35.89,0,991
+RR,RR,Round Robin (q=2),true,120,75.35,51.52,66.03,84.66,51.95,177.8,89.28,57.03,99.83,75.59,8.15,0.847,0.9182,233.97,15.47,0,1108
+PRIORITY,PRIORITY,Priority,true,120,53.19,27.18,48.28,58.1,40.8,106.8,67.12,32.58,99.83,64.74,8.15,0.5726,0.7902,252.54,36.87,0,863
+Q_LEARNING_TRAINED,Q_LEARNING,Q-Learning (Trained),true,120,73.25,45.79,64.98,81.53,51.85,161.56,87.19,51.28,99.59,65.02,8.13,0.7493,0.8358,232.49,20.69,0,1082
+DQN_TRAINED,DQN,DQN (Trained),true,120,56.17,29.28,50.87,61.46,42.95,114.03,70.1,34.72,99.83,31.25,8.15,0.5726,0.7889,247.97,34.27,0,877
+Q_LEARNING_UNTRAINED,Q_LEARNING,Q-Learning (Untrained Ref),false,120,71.51,46.55,63.09,79.92,48.85,160.36,85.44,52.02,99.83,64.87,8.15,0.7731,0.8549,236.17,19.15,0,1043
+DQN_UNTRAINED,DQN,DQN (Untrained Ref),false,120,55.02,27.54,50.04,60,44,109.74,68.95,32.99,99.83,30.51,8.15,0.58,0.7886,249.92,36.11,0,905

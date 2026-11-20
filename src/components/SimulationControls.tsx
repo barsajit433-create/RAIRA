@@ -40,7 +40,7 @@ export const SimulationControls: React.FC<SimulationControlsProps> = ({
           type="button"
           onClick={onStart}
           disabled={!hasProcesses || busy}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-3.5 py-2 text-xs font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          className="raira-btn-primary inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap shrink-0 cursor-pointer"
         >
           <Play className="h-3.5 w-3.5" aria-hidden="true" />
           <span>{isFinished ? 'Run Again' : 'Start Simulation'}</span>
@@ -52,7 +52,12 @@ export const SimulationControls: React.FC<SimulationControlsProps> = ({
           type="button"
           onClick={onPause}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 px-3.5 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/30 disabled:opacity-40 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          className="inline-flex items-center gap-1.5 rounded-lg border px-3.5 py-2 text-xs font-semibold disabled:opacity-40 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          style={{
+            backgroundColor: 'var(--status-warning-soft)',
+            borderColor: 'var(--status-warning)',
+            color: 'var(--status-warning)',
+          }}
         >
           <Pause className="h-3.5 w-3.5" aria-hidden="true" />
           <span>Pause</span>
@@ -64,7 +69,7 @@ export const SimulationControls: React.FC<SimulationControlsProps> = ({
           type="button"
           onClick={onResume}
           disabled={busy}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3.5 py-2 text-xs font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-40 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 dark:bg-emerald-500 px-3.5 py-2 text-xs font-semibold text-white dark:text-slate-950 hover:bg-emerald-700 dark:hover:bg-emerald-400 disabled:opacity-40 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
         >
           <Play className="h-3.5 w-3.5" aria-hidden="true" />
           <span>Resume</span>
@@ -75,7 +80,7 @@ export const SimulationControls: React.FC<SimulationControlsProps> = ({
         type="button"
         onClick={onStep}
         disabled={!hasProcesses || isRunning || isFinished || busy}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+        className="raira-btn-secondary inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap shrink-0 cursor-pointer"
       >
         <StepForward className="h-3.5 w-3.5" aria-hidden="true" />
         <span>Step</span>
@@ -85,14 +90,14 @@ export const SimulationControls: React.FC<SimulationControlsProps> = ({
         type="button"
         onClick={onReset}
         disabled={!hasProcesses || busy}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+        className="raira-btn-secondary inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap shrink-0 cursor-pointer"
       >
         <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
         <span>Reset</span>
       </button>
 
       {showSpeedControl && onChangeSpeed && (
-        <div className="flex items-center gap-2 ml-auto text-xs text-slate-400">
+        <div className="flex items-center gap-2 ml-auto text-xs text-[var(--text-muted)]">
           <label htmlFor="sim-speed-select" className="whitespace-nowrap">
             Tick Speed
           </label>
@@ -100,7 +105,7 @@ export const SimulationControls: React.FC<SimulationControlsProps> = ({
             id="sim-speed-select"
             value={stepIntervalMs}
             onChange={(e) => onChangeSpeed(Number(e.target.value))}
-            className="rounded-lg border border-slate-700 bg-[#080F1D] px-2.5 py-1.5 text-xs font-mono text-slate-200 focus:border-cyan-500 focus:outline-none"
+            className="raira-input rounded-lg px-2.5 py-1.5 text-xs font-mono"
           >
             <option value={800}>Slow (800ms)</option>
             <option value={350}>Normal (350ms)</option>

@@ -9,6 +9,13 @@ import type {
   SerializedQLearningModel,
   TrainingSessionSnapshot,
 } from '../types/reinforcementLearning';
+import type {
+  CounterfactualReport,
+  ShockArenaReport,
+  ShockScenarioConfig,
+  StatisticalValidationConfig,
+  StatisticalValidationReport,
+} from '../types/intelligence';
 import { generateWorkload } from '../simulation/WorkloadGenerator';
 
 type LocalServiceModule = typeof import('../../server/services/rairaService');
@@ -185,6 +192,7 @@ export const rairaApi = {
     rrQuantum?: number;
     stepIntervalMs?: number;
     rewardWeights?: Partial<RewardWeights>;
+    starvationThreshold?: number;
   }): Promise<SimulationSnapshot> {
     return callWithFallback(
       () =>
@@ -348,6 +356,45 @@ export const rairaApi = {
           body: JSON.stringify(params),
         }),
       (svc) => svc.runComparison(params)
+    );
+  },
+
+  runCounterfactual(params: {
+    horizonTicks: number | 'FULL_EPISODE';
+    rlReferenceAgent?: 'Q_LEARNING' | 'DQN';
+    alternativeActionId?: number | null;
+  }): Promise<CounterfactualReport> {
+    return callWithFallback(
+      () =>
+        fetchBackendJson('/api/counterfactual/run', {
+          method: 'POST',
+          body: JSON.stringify(params),
+        }),
+      (svc) => svc.runCounterfactual(params)
+    );
+  },
+
+  runShockArena(config: ShockScenarioConfig): Promise<ShockArenaReport> {
+    return callWithFallback(
+      () =>
+        fetchBackendJson('/api/shock/run', {
+          method: 'POST',
+          body: JSON.stringify(config),
+        }),
+      (svc) => svc.runShockArena(config)
+    );
+  },
+
+  runStatisticalValidation(
+    config: StatisticalValidationConfig
+  ): Promise<StatisticalValidationReport> {
+    return callWithFallback(
+      () =>
+        fetchBackendJson('/api/validation/run', {
+          method: 'POST',
+          body: JSON.stringify(config),
+        }),
+      (svc) => svc.runStatisticalValidationSuite(config)
     );
   },
 };

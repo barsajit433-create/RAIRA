@@ -23,9 +23,9 @@ export const AlgorithmSelector: React.FC<AlgorithmSelectorProps> = ({
 }) => {
   return (
     <div className="space-y-1.5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 text-xs text-slate-400">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 text-xs text-[var(--text-muted)]">
         <span>Scheduling Algorithm</span>
-        <span className="font-mono text-[11px] text-slate-500">
+        <span className="font-mono text-[11px] text-[var(--text-muted)]">
           {value === 'Q_LEARNING'
             ? qLearningTrained
               ? 'Trained Q-table active'
@@ -42,14 +42,10 @@ export const AlgorithmSelector: React.FC<AlgorithmSelectorProps> = ({
       <div
         role="group"
         aria-label="Select scheduling algorithm"
-        className="flex flex-wrap items-center gap-1.5 p-1 rounded-lg bg-[#080F1D] border border-slate-800/90"
+        className="flex flex-wrap items-center gap-1.5 p-1 rounded-lg raira-subtle"
       >
         {ALGORITHMS.map((alg) => {
           const active = value === alg;
-          const isUntrainedRL =
-            (alg === 'Q_LEARNING' && !qLearningTrained) ||
-            (alg === 'DQN' && (!dqnTrained || !dqnAvailable));
-
           return (
             <button
               key={alg}
@@ -57,17 +53,27 @@ export const AlgorithmSelector: React.FC<AlgorithmSelectorProps> = ({
               disabled={disabled || (alg === 'DQN' && !dqnAvailable)}
               onClick={() => onChange(alg)}
               aria-pressed={active}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed ${
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed border ${
                 active
-                  ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/40'
-                  : 'text-slate-400 border border-transparent hover:text-slate-100 hover:bg-slate-800/60'
+                  ? 'text-[var(--accent-text)]'
+                  : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:bg-[var(--surface-card-hover)]'
               }`}
+              style={
+                active
+                  ? {
+                      backgroundColor: 'var(--accent-soft)',
+                      borderColor: 'var(--accent-border)',
+                    }
+                  : undefined
+              }
             >
               <span>{formatAlgorithmShort(alg)}</span>
               {alg === 'Q_LEARNING' && (
                 <span
                   className={`ml-1.5 text-[10px] font-mono ${
-                    qLearningTrained ? 'text-emerald-400' : 'text-amber-400'
+                    qLearningTrained
+                      ? 'text-emerald-700 dark:text-emerald-400'
+                      : 'text-amber-700 dark:text-amber-400'
                   }`}
                 >
                   {qLearningTrained ? '(Trained)' : '(Untrained)'}
@@ -77,16 +83,15 @@ export const AlgorithmSelector: React.FC<AlgorithmSelectorProps> = ({
                 <span
                   className={`ml-1.5 text-[10px] font-mono ${
                     !dqnAvailable
-                      ? 'text-red-400'
+                      ? 'text-red-700 dark:text-red-400'
                       : dqnTrained
-                        ? 'text-emerald-400'
-                        : 'text-amber-400'
+                        ? 'text-emerald-700 dark:text-emerald-400'
+                        : 'text-amber-700 dark:text-amber-400'
                   }`}
                 >
                   {!dqnAvailable ? '(Unavailable)' : dqnTrained ? '(Trained)' : '(Untrained)'}
                 </span>
               )}
-              {!isUntrainedRL && alg !== 'Q_LEARNING' && alg !== 'DQN' ? null : null}
             </button>
           );
         })}

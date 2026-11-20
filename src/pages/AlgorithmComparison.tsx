@@ -15,26 +15,34 @@ import {
 import type { WorkloadType } from '../types/process';
 import type { SeedComparisonBatch } from '../types/experiment';
 import type { TrainingSessionSnapshot } from '../types/reinforcementLearning';
+import type { StatisticalValidationReport } from '../types/intelligence';
 import { rairaApi } from '../services/api';
 import { exportService } from '../services/exportService';
+import { StatisticalValidationLab } from '../components/StatisticalValidationLab';
 import {
   formatAlgorithmShort,
   formatProvenanceLabel,
   formatWorkloadName,
   getProvenanceClass,
 } from '../utils/formatters';
+import { useTheme } from '../theme/ThemeContext';
 
 interface AlgorithmComparisonProps {
   latestComparison: SeedComparisonBatch | null;
   training: TrainingSessionSnapshot | null;
   onComparisonComplete: (batch: SeedComparisonBatch) => void;
+  latestValidationReport: StatisticalValidationReport | null;
+  onValidationComplete: (report: StatisticalValidationReport) => void;
 }
 
 export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
   latestComparison,
   training,
   onComparisonComplete,
+  latestValidationReport,
+  onValidationComplete,
 }) => {
+  const { chartTheme } = useTheme();
   const [workloadType, setWorkloadType] = useState<Exclude<WorkloadType, 'CUSTOM'>>('MIXED');
   const [numProcesses, setNumProcesses] = useState(10);
   const [seedsInput, setSeedsInput] = useState('42, 108, 256');
@@ -100,32 +108,35 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
       return row;
     }) ?? [];
 
-  // Derive empirical factual summary (never claims RL wins unless numbers prove it)
-  const bestByWait = latestComparison?.aggregated
-    .filter((a) => a.available && a.rankByWaitingTime === 1)[0];
-  const bestByReward = latestComparison?.aggregated
-    .filter((a) => a.available && a.rankByReward === 1)[0];
+  const bestByWait = latestComparison?.aggregated.filter(
+    (a) => a.available && a.rankByWaitingTime === 1
+  )[0];
+  const bestByReward = latestComparison?.aggregated.filter(
+    (a) => a.available && a.rankByReward === 1
+  )[0];
 
   return (
-    <div className="space-y-6">
+    <div className="raira-section-stack">
       {/* Configuration Panel */}
-      <section className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5 space-y-4">
+      <section className="raira-card raira-card-pad space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h2 className="font-display text-base font-semibold text-slate-100">
+            <h2 className="font-display text-base font-semibold text-[var(--text-primary)]">
               Controlled Multi-Algorithm Benchmark
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[var(--text-muted)]">
               Evaluates FCFS, Round Robin, Priority, Tabular Q-Learning, and DQN on identical
               process workloads and seeds under the same 1-core CPU and 4096 MB RAM rules.
             </p>
           </div>
-          <div className="text-xs font-mono text-slate-400 space-y-0.5 text-right">
+          <div className="text-xs font-mono text-[var(--text-muted)] space-y-0.5 text-right">
             <div>
               Q-Learning:{' '}
               <span
                 className={
-                  training?.qLearningSummary.isTrained ? 'text-emerald-400' : 'text-amber-400'
+                  training?.qLearningSummary.isTrained
+                    ? 'text-emerald-700 dark:text-emerald-400'
+                    : 'text-amber-700 dark:text-amber-400'
                 }
               >
                 {training?.qLearningSummary.isTrained
@@ -137,7 +148,9 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
               DQN:{' '}
               <span
                 className={
-                  training?.dqnSummary.isTrained ? 'text-emerald-400' : 'text-amber-400'
+                  training?.dqnSummary.isTrained
+                    ? 'text-emerald-700 dark:text-emerald-400'
+                    : 'text-amber-700 dark:text-amber-400'
                 }
               >
                 {training?.dqnSummary.isTrained
@@ -150,14 +163,17 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end text-xs">
           <div>
-            <label htmlFor="cmp-workload" className="block text-slate-400 mb-1 whitespace-nowrap">
+            <label
+              htmlFor="cmp-workload"
+              className="block text-[var(--text-muted)] mb-1 whitespace-nowrap"
+            >
               Workload Scenario
             </label>
             <select
               id="cmp-workload"
               value={workloadType}
               onChange={(e) => setWorkloadType(e.target.value as Exclude<WorkloadType, 'CUSTOM'>)}
-              className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-2 text-slate-100 focus:border-cyan-500 focus:outline-none"
+              className="raira-input w-full rounded-lg px-3 py-2"
             >
               <option value="CPU_INTENSIVE">CPU-Intensive</option>
               <option value="MEMORY_INTENSIVE">Memory-Intensive</option>
@@ -167,7 +183,10 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
           </div>
 
           <div>
-            <label htmlFor="cmp-procs" className="block text-slate-400 mb-1 whitespace-nowrap">
+            <label
+              htmlFor="cmp-procs"
+              className="block text-[var(--text-muted)] mb-1 whitespace-nowrap"
+            >
               Processes (1–32)
             </label>
             <input
@@ -179,12 +198,15 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
               onChange={(e) =>
                 setNumProcesses(Math.max(1, Math.min(32, Number(e.target.value) || 1)))
               }
-              className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-2 font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+              className="raira-input w-full rounded-lg px-3 py-2 font-mono"
             />
           </div>
 
           <div>
-            <label htmlFor="cmp-seeds" className="block text-slate-400 mb-1 whitespace-nowrap">
+            <label
+              htmlFor="cmp-seeds"
+              className="block text-[var(--text-muted)] mb-1 whitespace-nowrap"
+            >
               Random Seeds
             </label>
             <input
@@ -193,12 +215,15 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
               value={seedsInput}
               onChange={(e) => setSeedsInput(e.target.value)}
               placeholder="42, 108, 256"
-              className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-2 font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+              className="raira-input w-full rounded-lg px-3 py-2 font-mono"
             />
           </div>
 
           <div>
-            <label htmlFor="cmp-rrq" className="block text-slate-400 mb-1 whitespace-nowrap">
+            <label
+              htmlFor="cmp-rrq"
+              className="block text-[var(--text-muted)] mb-1 whitespace-nowrap"
+            >
               RR Quantum (ticks)
             </label>
             <input
@@ -207,8 +232,10 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
               min={1}
               max={16}
               value={rrQuantum}
-              onChange={(e) => setRrQuantum(Math.max(1, Math.min(16, Number(e.target.value) || 2)))}
-              className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-2 font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+              onChange={(e) =>
+                setRrQuantum(Math.max(1, Math.min(16, Number(e.target.value) || 2)))
+              }
+              className="raira-input w-full rounded-lg px-3 py-2 font-mono"
             />
           </div>
 
@@ -217,7 +244,7 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
               type="button"
               onClick={handleRun}
               disabled={running}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50 transition-colors cursor-pointer whitespace-nowrap"
+              className="raira-btn-primary w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold disabled:opacity-50 cursor-pointer whitespace-nowrap"
             >
               <Play className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{running ? 'Running Benchmark...' : 'Run Algorithm Comparison'}</span>
@@ -225,12 +252,12 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
           </div>
         </div>
 
-        <label className="inline-flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+        <label className="inline-flex items-center gap-2 text-xs text-[var(--text-muted)] cursor-pointer">
           <input
             type="checkbox"
             checked={includeUntrainedRL}
             onChange={(e) => setIncludeUntrainedRL(e.target.checked)}
-            className="rounded border-slate-700 bg-[#070D19] text-cyan-500"
+            style={{ accentColor: 'var(--accent-primary)' }}
           />
           <span>
             Evaluate untrained RL agents for baseline reference (clearly marked as Untrained in
@@ -239,16 +266,26 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
         </label>
 
         {error && (
-          <div role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
+          <div
+            role="alert"
+            className="rounded-lg border px-3.5 py-2.5 text-xs"
+            style={{
+              borderColor: 'var(--status-danger)',
+              backgroundColor: 'var(--status-danger-soft)',
+              color: 'var(--status-danger)',
+            }}
+          >
             {error}
           </div>
         )}
       </section>
 
       {!latestComparison ? (
-        <div className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-10 text-center space-y-2">
-          <p className="text-sm font-medium text-slate-200">No comparison benchmark executed yet</p>
-          <p className="text-xs text-slate-400 max-w-lg mx-auto">
+        <div className="raira-card p-10 text-center space-y-2">
+          <p className="text-sm font-medium text-[var(--text-primary)]">
+            No comparison benchmark executed yet
+          </p>
+          <p className="text-xs text-[var(--text-muted)] max-w-lg mx-auto">
             Select a workload scenario and random seed list above, then click Run Algorithm
             Comparison to evaluate all five schedulers under identical process arrival traces.
           </p>
@@ -256,9 +293,9 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
       ) : (
         <>
           {/* Empirical Summary Banner */}
-          <section className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <section className="raira-card raira-card-pad flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-xs font-mono text-cyan-400">
+              <div className="flex items-center gap-2 text-xs font-mono text-[var(--accent-text)]">
                 <Trophy className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>
                   Empirical Benchmark Summary · {formatWorkloadName(latestComparison.workloadType)}{' '}
@@ -266,7 +303,7 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
                   {latestComparison.seeds.join(', ')}
                 </span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                 {bestByWait
                   ? `Lowest observed average waiting time: ${formatAlgorithmShort(bestByWait.algorithm)} (${bestByWait.avgWaitingTime}t${bestByWait.isTrainedModel ? '' : ', untrained'}). `
                   : ''}
@@ -281,7 +318,7 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
               <button
                 type="button"
                 onClick={() => exportService.exportComparisonCsv(latestComparison)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800 cursor-pointer whitespace-nowrap"
+                className="raira-btn-secondary inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs cursor-pointer whitespace-nowrap"
               >
                 <Download className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Export CSV</span>
@@ -294,7 +331,7 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
                     `raira-comparison-${latestComparison.workloadType.toLowerCase()}.json`
                   )
                 }
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800 cursor-pointer whitespace-nowrap"
+                className="raira-btn-secondary inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs cursor-pointer whitespace-nowrap"
               >
                 <Download className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Export JSON</span>
@@ -302,47 +339,58 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
             </div>
           </section>
 
-          {/* Comparison Table (All 8 Metrics + Ranking + Trained Status) */}
-          <section className="rounded-xl border border-slate-800/80 bg-[#0B1221] overflow-hidden">
-            <div className="px-5 py-3.5 border-b border-slate-800/80 flex items-center justify-between">
+          {/* Comparison Table */}
+          <section className="raira-card overflow-hidden">
+            <div
+              className="px-5 py-3.5 border-b flex items-center justify-between"
+              style={{ borderColor: 'var(--border-subtle)' }}
+            >
               <div>
-                <h3 className="font-display text-sm font-semibold text-slate-100">
+                <h3 className="font-display text-sm font-semibold text-[var(--text-primary)]">
                   Aggregated Performance Comparison Table
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[var(--text-muted)]">
                   Lower waiting/turnaround/response time is better · Higher throughput, useful CPU
                   utilisation, fairness, and reward is better
                 </p>
               </div>
-              <span className="text-xs font-mono text-slate-500">
+              <span className="text-xs font-mono text-[var(--text-muted)]">
                 * = untrained RL weights
               </span>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
+              <table className="raira-table w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-slate-800 bg-[#080F1D] text-[11px] text-slate-400">
-                    <th className="py-2.5 px-3">Algorithm</th>
-                    <th className="py-2.5 px-3">Model Status</th>
-                    <th className="py-2.5 px-3 text-right">Avg CPU %</th>
-                    <th className="py-2.5 px-3 text-right">Avg RAM %</th>
-                    <th className="py-2.5 px-3 text-right">Avg Wait (t)</th>
-                    <th className="py-2.5 px-3 text-right">Avg Turn (t)</th>
-                    <th className="py-2.5 px-3 text-right">Avg Resp (t)</th>
-                    <th className="py-2.5 px-3 text-right">Throughput</th>
-                    <th className="py-2.5 px-3 text-right">Jain Fairness</th>
-                    <th className="py-2.5 px-3 text-right">Avg Reward</th>
-                    <th className="py-2.5 px-3 text-right">Rank (Wait / Rew)</th>
+                  <tr
+                    className="border-b text-[11px] text-[var(--text-muted)]"
+                    style={{
+                      borderColor: 'var(--border-subtle)',
+                      backgroundColor: 'var(--surface-subtle)',
+                    }}
+                  >
+                    <th className="px-3">Algorithm</th>
+                    <th className="px-3">Model Status</th>
+                    <th className="px-3 text-right">Avg CPU %</th>
+                    <th className="px-3 text-right">Avg RAM %</th>
+                    <th className="px-3 text-right">Avg Wait (t)</th>
+                    <th className="px-3 text-right">Avg Turn (t)</th>
+                    <th className="px-3 text-right">Avg Resp (t)</th>
+                    <th className="px-3 text-right">Throughput</th>
+                    <th className="px-3 text-right">Jain Fairness</th>
+                    <th className="px-3 text-right">Avg Reward</th>
+                    <th className="px-3 text-right">Rank (Wait / Rew)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 font-mono tabular-nums">
+                <tbody className="divide-y divide-[var(--border-subtle)] font-mono tabular-nums">
                   {latestComparison.aggregated.map((row) => (
-                    <tr key={row.algorithm} className="hover:bg-slate-800/30">
-                      <td className="py-2.5 px-3 font-sans font-semibold text-slate-100 whitespace-nowrap">
+                    <tr key={row.algorithm} className="hover:bg-[var(--surface-subtle)]">
+                      <td className="px-3 font-sans font-semibold text-[var(--text-primary)] whitespace-nowrap">
                         {formatAlgorithmShort(row.algorithm)}
                       </td>
-                      <td className={`py-2.5 px-3 font-sans whitespace-nowrap ${getProvenanceClass(row.provenance)}`}>
+                      <td
+                        className={`px-3 font-sans whitespace-nowrap ${getProvenanceClass(row.provenance)}`}
+                      >
                         {!row.available
                           ? 'Unavailable'
                           : row.isTrainedModel
@@ -353,36 +401,39 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
                       </td>
                       {row.available ? (
                         <>
-                          <td className="py-2.5 px-3 text-right text-slate-200">
+                          <td className="px-3 text-right text-[var(--text-primary)]">
                             {row.avgCpuUtilisation.toFixed(1)}%
                           </td>
-                          <td className="py-2.5 px-3 text-right text-slate-200">
+                          <td className="px-3 text-right text-[var(--text-primary)]">
                             {row.avgRamUtilisation.toFixed(1)}%
                           </td>
-                          <td className="py-2.5 px-3 text-right text-cyan-300">
+                          <td className="px-3 text-right text-[var(--accent-text)]">
                             {row.avgWaitingTime.toFixed(2)}
                           </td>
-                          <td className="py-2.5 px-3 text-right text-slate-200">
+                          <td className="px-3 text-right text-[var(--text-primary)]">
                             {row.avgTurnaroundTime.toFixed(2)}
                           </td>
-                          <td className="py-2.5 px-3 text-right text-slate-300">
+                          <td className="px-3 text-right text-[var(--text-secondary)]">
                             {row.avgResponseTime.toFixed(2)}
                           </td>
-                          <td className="py-2.5 px-3 text-right text-emerald-400">
+                          <td className="px-3 text-right text-emerald-700 dark:text-emerald-400">
                             {row.throughput.toFixed(2)}
                           </td>
-                          <td className="py-2.5 px-3 text-right text-slate-200">
+                          <td className="px-3 text-right text-[var(--text-primary)]">
                             {row.jainFairnessIndex.toFixed(4)}
                           </td>
-                          <td className="py-2.5 px-3 text-right text-slate-100 font-semibold">
+                          <td className="px-3 text-right text-[var(--text-primary)] font-semibold">
                             {row.avgEpisodeReward.toFixed(2)}
                           </td>
-                          <td className="py-2.5 px-3 text-right text-slate-400">
+                          <td className="px-3 text-right text-[var(--text-muted)]">
                             #{row.rankByWaitingTime ?? '—'} / #{row.rankByReward ?? '—'}
                           </td>
                         </>
                       ) : (
-                        <td colSpan={9} className="py-2.5 px-3 font-sans text-amber-400">
+                        <td
+                          colSpan={9}
+                          className="px-3 font-sans text-amber-700 dark:text-amber-400"
+                        >
                           {row.unavailableReason ?? formatProvenanceLabel(row.provenance)}
                         </td>
                       )}
@@ -395,61 +446,115 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
 
           {/* Bar Charts */}
           <section className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-            <div className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5">
-              <h3 className="font-display text-sm font-semibold text-slate-100">
+            <div className="raira-card raira-card-pad">
+              <h3 className="font-display text-sm font-semibold text-[var(--text-primary)]">
                 Latency Comparison (Waiting, Turnaround, Response)
               </h3>
-              <p className="text-xs text-slate-400 mb-4">Lower bars indicate faster process service</p>
+              <p className="text-xs text-[var(--text-muted)] mb-4">
+                Lower bars indicate faster process service
+              </p>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 8, right: 12, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-                    <XAxis dataKey="name" stroke="#64748B" tick={{ fontSize: 11, fill: '#94A3B8' }} />
-                    <YAxis stroke="#64748B" tick={{ fontSize: 11, fill: '#94A3B8' }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                    <XAxis
+                      dataKey="name"
+                      stroke={chartTheme.axis}
+                      tick={{ fontSize: 11, fill: chartTheme.tick }}
+                    />
+                    <YAxis
+                      stroke={chartTheme.axis}
+                      tick={{ fontSize: 11, fill: chartTheme.tick }}
+                    />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#0F172A',
-                        borderColor: '#334155',
+                        backgroundColor: chartTheme.tooltipBg,
+                        borderColor: chartTheme.tooltipBorder,
                         borderRadius: '8px',
                         fontSize: '12px',
-                        color: '#E2E8F0',
+                        color: chartTheme.tooltipText,
                       }}
+                      labelStyle={{ color: chartTheme.tooltipLabel }}
                     />
-                    <Legend wrapperStyle={{ fontSize: '12px' }} />
-                    <Bar dataKey="avgWaitingTime" name="Avg Waiting (t)" fill="#06B6D4" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="avgTurnaroundTime" name="Avg Turnaround (t)" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="avgResponseTime" name="Avg Response (t)" fill="#F59E0B" radius={[4, 4, 0, 0]} />
+                    <Legend wrapperStyle={{ fontSize: '12px', color: chartTheme.tick }} />
+                    <Bar
+                      dataKey="avgWaitingTime"
+                      name="Avg Waiting (t)"
+                      fill={chartTheme.primary}
+                      radius={chartTheme.barRadius}
+                      isAnimationActive={false}
+                    />
+                    <Bar
+                      dataKey="avgTurnaroundTime"
+                      name="Avg Turnaround (t)"
+                      fill={chartTheme.secondary}
+                      radius={chartTheme.barRadius}
+                      isAnimationActive={false}
+                    />
+                    <Bar
+                      dataKey="avgResponseTime"
+                      name="Avg Response (t)"
+                      fill={chartTheme.warning}
+                      radius={chartTheme.barRadius}
+                      isAnimationActive={false}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5">
-              <h3 className="font-display text-sm font-semibold text-slate-100">
+            <div className="raira-card raira-card-pad">
+              <h3 className="font-display text-sm font-semibold text-[var(--text-primary)]">
                 Episode Reward &amp; Resource Efficiency
               </h3>
-              <p className="text-xs text-slate-400 mb-4">
+              <p className="text-xs text-[var(--text-muted)] mb-4">
                 Multi-objective episode reward across evaluated algorithms
               </p>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 8, right: 12, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-                    <XAxis dataKey="name" stroke="#64748B" tick={{ fontSize: 11, fill: '#94A3B8' }} />
-                    <YAxis stroke="#64748B" tick={{ fontSize: 11, fill: '#94A3B8' }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                    <XAxis
+                      dataKey="name"
+                      stroke={chartTheme.axis}
+                      tick={{ fontSize: 11, fill: chartTheme.tick }}
+                    />
+                    <YAxis
+                      stroke={chartTheme.axis}
+                      tick={{ fontSize: 11, fill: chartTheme.tick }}
+                    />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#0F172A',
-                        borderColor: '#334155',
+                        backgroundColor: chartTheme.tooltipBg,
+                        borderColor: chartTheme.tooltipBorder,
                         borderRadius: '8px',
                         fontSize: '12px',
-                        color: '#E2E8F0',
+                        color: chartTheme.tooltipText,
                       }}
+                      labelStyle={{ color: chartTheme.tooltipLabel }}
                     />
-                    <Legend wrapperStyle={{ fontSize: '12px' }} />
-                    <Bar dataKey="avgEpisodeReward" name="Avg Episode Reward" fill="#10B981" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="avgCpuUtilisation" name="Avg CPU Util (%)" fill="#38BDF8" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="jainFairnessPct" name="Jain Fairness (%)" fill="#818CF8" radius={[4, 4, 0, 0]} />
+                    <Legend wrapperStyle={{ fontSize: '12px', color: chartTheme.tick }} />
+                    <Bar
+                      dataKey="avgEpisodeReward"
+                      name="Avg Episode Reward"
+                      fill={chartTheme.success}
+                      radius={chartTheme.barRadius}
+                      isAnimationActive={false}
+                    />
+                    <Bar
+                      dataKey="avgCpuUtilisation"
+                      name="Avg CPU Util (%)"
+                      fill={chartTheme.primary}
+                      radius={chartTheme.barRadius}
+                      isAnimationActive={false}
+                    />
+                    <Bar
+                      dataKey="jainFairnessPct"
+                      name="Jain Fairness (%)"
+                      fill={chartTheme.tertiary}
+                      radius={chartTheme.barRadius}
+                      isAnimationActive={false}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -457,12 +562,12 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
           </section>
 
           {/* Seed-wise Line Chart & Table */}
-          <section className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5 space-y-4">
+          <section className="raira-card raira-card-pad space-y-4">
             <div>
-              <h3 className="font-display text-sm font-semibold text-slate-100">
+              <h3 className="font-display text-sm font-semibold text-[var(--text-primary)]">
                 Seed-Wise Average Waiting Time Breakdown
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--text-muted)]">
                 Identical workload traces per seed across all evaluated schedulers
               </p>
             </div>
@@ -470,75 +575,124 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
             {seedLineData.length > 1 && (
               <div className="h-56 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={seedLineData} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-                    <XAxis dataKey="seed" stroke="#64748B" tick={{ fontSize: 11, fill: '#94A3B8' }} />
-                    <YAxis stroke="#64748B" tick={{ fontSize: 11, fill: '#94A3B8' }} />
+                  <LineChart
+                    data={seedLineData}
+                    margin={{ top: 8, right: 16, left: -10, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
+                    <XAxis
+                      dataKey="seed"
+                      stroke={chartTheme.axis}
+                      tick={{ fontSize: 11, fill: chartTheme.tick }}
+                    />
+                    <YAxis
+                      stroke={chartTheme.axis}
+                      tick={{ fontSize: 11, fill: chartTheme.tick }}
+                    />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#0F172A',
-                        borderColor: '#334155',
+                        backgroundColor: chartTheme.tooltipBg,
+                        borderColor: chartTheme.tooltipBorder,
                         borderRadius: '8px',
                         fontSize: '12px',
-                        color: '#E2E8F0',
+                        color: chartTheme.tooltipText,
                       }}
+                      labelStyle={{ color: chartTheme.tooltipLabel }}
                     />
-                    <Legend wrapperStyle={{ fontSize: '12px' }} />
-                    <Line type="monotone" dataKey="FCFS" stroke="#94A3B8" strokeWidth={2} />
-                    <Line type="monotone" dataKey="RR" stroke="#3B82F6" strokeWidth={2} />
-                    <Line type="monotone" dataKey="Priority" stroke="#F59E0B" strokeWidth={2} />
-                    <Line type="monotone" dataKey="Q-Learning" stroke="#06B6D4" strokeWidth={2} />
-                    <Line type="monotone" dataKey="DQN" stroke="#10B981" strokeWidth={2} />
+                    <Legend wrapperStyle={{ fontSize: '12px', color: chartTheme.tick }} />
+                    <Line
+                      type="monotone"
+                      dataKey="FCFS"
+                      stroke={chartTheme.appearance === 'dark' ? '#94A3B8' : '#64748B'}
+                      strokeWidth={2}
+                      isAnimationActive={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="RR"
+                      stroke={chartTheme.secondary}
+                      strokeWidth={2}
+                      isAnimationActive={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Priority"
+                      stroke={chartTheme.warning}
+                      strokeWidth={2}
+                      isAnimationActive={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="Q-Learning"
+                      stroke={chartTheme.primary}
+                      strokeWidth={2}
+                      isAnimationActive={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="DQN"
+                      stroke={chartTheme.success}
+                      strokeWidth={2}
+                      isAnimationActive={false}
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             )}
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs font-mono tabular-nums">
+              <table className="raira-table w-full text-left border-collapse text-xs font-mono tabular-nums">
                 <thead>
-                  <tr className="border-b border-slate-800 text-[11px] font-sans text-slate-400">
-                    <th className="py-2 px-3">Seed</th>
-                    <th className="py-2 px-3">Algorithm</th>
-                    <th className="py-2 px-3 text-right">Wait (t)</th>
-                    <th className="py-2 px-3 text-right">Turnaround (t)</th>
-                    <th className="py-2 px-3 text-right">CPU %</th>
-                    <th className="py-2 px-3 text-right">RAM %</th>
-                    <th className="py-2 px-3 text-right">Fairness</th>
-                    <th className="py-2 px-3 text-right">Reward</th>
-                    <th className="py-2 px-3 text-right">Outcome</th>
+                  <tr
+                    className="border-b text-[11px] font-sans text-[var(--text-muted)]"
+                    style={{ borderColor: 'var(--border-subtle)' }}
+                  >
+                    <th className="px-3">Seed</th>
+                    <th className="px-3">Algorithm</th>
+                    <th className="px-3 text-right">Wait (t)</th>
+                    <th className="px-3 text-right">Turnaround (t)</th>
+                    <th className="px-3 text-right">CPU %</th>
+                    <th className="px-3 text-right">RAM %</th>
+                    <th className="px-3 text-right">Fairness</th>
+                    <th className="px-3 text-right">Reward</th>
+                    <th className="px-3 text-right">Outcome</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/50">
+                <tbody className="divide-y divide-[var(--border-subtle)]">
                   {latestComparison.seeds.flatMap((seed) =>
                     (latestComparison.perSeedResults[seed] ?? []).map((r) => (
-                      <tr key={`${seed}-${r.algorithm}`} className="hover:bg-slate-800/25">
-                        <td className="py-2 px-3 text-slate-400">#{seed}</td>
-                        <td className="py-2 px-3 font-sans text-slate-200">
+                      <tr
+                        key={`${seed}-${r.algorithm}`}
+                        className="hover:bg-[var(--surface-subtle)]"
+                      >
+                        <td className="px-3 text-[var(--text-muted)]">#{seed}</td>
+                        <td className="px-3 font-sans text-[var(--text-primary)]">
                           {formatAlgorithmShort(r.algorithm)}
                           {!r.isTrainedModel && r.available && (
-                            <span className="ml-1.5 text-amber-400 text-[11px]">(Untrained)</span>
+                            <span className="ml-1.5 text-amber-700 dark:text-amber-400 text-[11px]">
+                              (Untrained)
+                            </span>
                           )}
                         </td>
-                        <td className="py-2 px-3 text-right text-cyan-300">
+                        <td className="px-3 text-right text-[var(--accent-text)]">
                           {r.available ? r.metrics.avgWaitingTime.toFixed(2) : '—'}
                         </td>
-                        <td className="py-2 px-3 text-right text-slate-200">
+                        <td className="px-3 text-right text-[var(--text-primary)]">
                           {r.available ? r.metrics.avgTurnaroundTime.toFixed(2) : '—'}
                         </td>
-                        <td className="py-2 px-3 text-right text-slate-300">
+                        <td className="px-3 text-right text-[var(--text-secondary)]">
                           {r.available ? `${r.metrics.avgCpuUtilisation.toFixed(1)}%` : '—'}
                         </td>
-                        <td className="py-2 px-3 text-right text-slate-300">
+                        <td className="px-3 text-right text-[var(--text-secondary)]">
                           {r.available ? `${r.metrics.avgRamUtilisation.toFixed(1)}%` : '—'}
                         </td>
-                        <td className="py-2 px-3 text-right text-slate-300">
+                        <td className="px-3 text-right text-[var(--text-secondary)]">
                           {r.available ? r.metrics.jainFairnessIndex.toFixed(4) : '—'}
                         </td>
-                        <td className="py-2 px-3 text-right text-emerald-400">
+                        <td className="px-3 text-right text-emerald-700 dark:text-emerald-400">
                           {r.available ? r.metrics.totalEpisodeReward.toFixed(2) : '—'}
                         </td>
-                        <td className="py-2 px-3 text-right text-slate-400">
+                        <td className="px-3 text-right text-[var(--text-muted)]">
                           {!r.available
                             ? 'N/A'
                             : r.terminated
@@ -556,6 +710,13 @@ export const AlgorithmComparison: React.FC<AlgorithmComparisonProps> = ({
           </section>
         </>
       )}
+
+      {/* Feature 6: Statistical Research Validation Laboratory */}
+      <StatisticalValidationLab
+        report={latestValidationReport}
+        onReportComplete={onValidationComplete}
+        defaultFocus="overview"
+      />
     </div>
   );
 };

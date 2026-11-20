@@ -1,4 +1,9 @@
-import type { ProcessRecord, ProcessSpec, WorkloadType } from './process';
+import type { ProcessRecord, ProcessSpec, WorkloadType } from './process.ts';
+import type {
+  DecisionExplanation,
+  FairnessMonitorSnapshot,
+  TimelineTickRecord,
+} from './intelligence.ts';
 
 export type AlgorithmType = 'FCFS' | 'RR' | 'PRIORITY' | 'Q_LEARNING' | 'DQN';
 
@@ -134,4 +139,8 @@ export interface SimulationSnapshot {
     qLearningTrained: boolean;
     dqnTrained: boolean;
   };
+  timelineTicks?: TimelineTickRecord[];
+  latestExplanation?: DecisionExplanation | null;
+  explanationHistory?: DecisionExplanation[];
+  fairnessMonitor?: FairnessMonitorSnapshot;
 }

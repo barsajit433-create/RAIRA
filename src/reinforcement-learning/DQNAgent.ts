@@ -133,6 +133,11 @@ export class DQNAgent {
     }
   }
 
+  dispose(): void {
+    this.disposeModels();
+    this.initialized = false;
+  }
+
   configure(params: Partial<DQNHyperparams>, seed?: number): void {
     const lrChanged = params.learningRate !== undefined && params.learningRate !== this.params.learningRate;
     this.params = { ...this.params, ...params };
@@ -180,6 +185,23 @@ export class DQNAgent {
 
   getHistory(): TrainingEpisodeMetric[] {
     return [...this.history];
+  }
+
+  /**
+   * Performs a single online-network forward pass and returns all 97 raw Q-values.
+   * Used by the Explainable AI Decision Engine and controlled feature-perturbation sensitivity analysis.
+   */
+  predictQValues(observation: Float32Array): number[] {
+    if (!this.isAvailable() || !this.onlineNetwork) {
+      throw new Error(
+        this.dependencyStatus.error ?? 'DQN dependency unavailable: TensorFlow.js model is not initialized.'
+      );
+    }
+    return tf.tidy(() => {
+      const inputTensor = tf.tensor2d(observation, [1, OBSERVATION_SIZE], 'float32');
+      const output = this.onlineNetwork!.predict(inputTensor) as tf.Tensor;
+      return Array.from(output.dataSync());
+    });
   }
 
   /**

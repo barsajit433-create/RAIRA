@@ -70,9 +70,9 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({
 
   if (processes.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-8 text-center">
-        <p className="text-sm font-medium text-slate-300">No processes in the queue</p>
-        <p className="mt-1 text-xs text-slate-500">
+      <div className="raira-card p-8 text-center">
+        <p className="text-sm font-medium text-[var(--text-primary)]">No processes in the queue</p>
+        <p className="mt-1 text-xs text-[var(--text-muted)]">
           Add processes manually, generate a seeded workload, or launch the demo workload to begin.
         </p>
       </div>
@@ -80,9 +80,12 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({
   }
 
   return (
-    <div className="rounded-xl border border-slate-800/80 bg-[#0B1221] overflow-hidden">
+    <div className="raira-card overflow-hidden">
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-slate-800/80">
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b"
+        style={{ borderColor: 'var(--border-subtle)' }}
+      >
         <div
           role="group"
           aria-label="Filter processes by status"
@@ -100,11 +103,19 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({
                 type="button"
                 onClick={() => setStatusFilter(st)}
                 aria-pressed={active}
-                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer border ${
                   active
-                    ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
-                    : 'text-slate-400 border border-transparent hover:text-slate-200 hover:bg-slate-800/50'
+                    ? 'text-[var(--accent-text)]'
+                    : 'text-[var(--text-muted)] border-transparent hover:text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]'
                 }`}
+                style={
+                  active
+                    ? {
+                        backgroundColor: 'var(--accent-soft)',
+                        borderColor: 'var(--accent-border)',
+                      }
+                    : undefined
+                }
               >
                 {st === 'ALL' ? 'All' : st} ({count})
               </button>
@@ -112,146 +123,161 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({
           })}
         </div>
 
-        <div className="text-xs font-mono tabular-nums text-slate-500">
+        <div className="text-xs font-mono tabular-nums text-[var(--text-muted)]">
           Showing {filteredAndSorted.length} / {processes.length} slots
         </div>
       </div>
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="raira-table w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-slate-800/80 bg-[#080F1D] text-[11px] font-medium text-slate-400">
-              <th className="py-2.5 px-3 whitespace-nowrap">
+            <tr
+              className="border-b text-[11px] font-medium text-[var(--text-muted)]"
+              style={{
+                backgroundColor: 'var(--surface-subtle)',
+                borderColor: 'var(--border-subtle)',
+              }}
+            >
+              <th className="px-3 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => toggleSort('slotIndex')}
-                  className="inline-flex items-center gap-1 hover:text-slate-200 cursor-pointer"
+                  className="inline-flex items-center gap-1 hover:text-[var(--text-primary)] cursor-pointer"
                 >
                   PID <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
                 </button>
               </th>
-              <th className="py-2.5 px-3 whitespace-nowrap">Process Name</th>
-              <th className="py-2.5 px-3 whitespace-nowrap">
+              <th className="px-3 whitespace-nowrap">Process Name</th>
+              <th className="px-3 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => toggleSort('status')}
-                  className="inline-flex items-center gap-1 hover:text-slate-200 cursor-pointer"
+                  className="inline-flex items-center gap-1 hover:text-[var(--text-primary)] cursor-pointer"
                 >
                   Status <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
                 </button>
               </th>
-              <th className="py-2.5 px-3 text-right whitespace-nowrap">
+              <th className="px-3 text-right whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => toggleSort('arrivalTime')}
-                  className="inline-flex items-center gap-1 hover:text-slate-200 cursor-pointer"
+                  className="inline-flex items-center gap-1 hover:text-[var(--text-primary)] cursor-pointer"
                 >
                   Arrival <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
                 </button>
               </th>
-              <th className="py-2.5 px-3 text-right whitespace-nowrap">
+              <th className="px-3 text-right whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => toggleSort('remainingCpuTime')}
-                  className="inline-flex items-center gap-1 hover:text-slate-200 cursor-pointer"
+                  className="inline-flex items-center gap-1 hover:text-[var(--text-primary)] cursor-pointer"
                 >
                   Rem / Burst <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
                 </button>
               </th>
-              <th className="py-2.5 px-3 text-right whitespace-nowrap">
+              <th className="px-3 text-right whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => toggleSort('priority')}
-                  className="inline-flex items-center gap-1 hover:text-slate-200 cursor-pointer"
+                  className="inline-flex items-center gap-1 hover:text-[var(--text-primary)] cursor-pointer"
                 >
                   Priority <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
                 </button>
               </th>
-              <th className="py-2.5 px-3 text-right whitespace-nowrap">
+              <th className="px-3 text-right whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => toggleSort('memoryDemand')}
-                  className="inline-flex items-center gap-1 hover:text-slate-200 cursor-pointer"
+                  className="inline-flex items-center gap-1 hover:text-[var(--text-primary)] cursor-pointer"
                 >
                   RAM Alloc / Req <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
                 </button>
               </th>
-              <th className="py-2.5 px-3 text-right whitespace-nowrap">
+              <th className="px-3 text-right whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => toggleSort('waitingTime')}
-                  className="inline-flex items-center gap-1 hover:text-slate-200 cursor-pointer"
+                  className="inline-flex items-center gap-1 hover:text-[var(--text-primary)] cursor-pointer"
                 >
                   Wait <ArrowUpDown className="h-3 w-3" aria-hidden="true" />
                 </button>
               </th>
               {!compact && (
                 <>
-                  <th className="py-2.5 px-3 text-right whitespace-nowrap">Resp</th>
-                  <th className="py-2.5 px-3 text-right whitespace-nowrap">Turnaround</th>
+                  <th className="px-3 text-right whitespace-nowrap">Resp</th>
+                  <th className="px-3 text-right whitespace-nowrap">Turnaround</th>
                 </>
               )}
               {(editable || onSelectDetail) && (
-                <th className="py-2.5 px-3 text-right whitespace-nowrap">Actions</th>
+                <th className="px-3 text-right whitespace-nowrap">Actions</th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/60 text-xs">
+          <tbody className="divide-y divide-[var(--border-subtle)] text-xs">
             {filteredAndSorted.map((proc) => (
               <tr
                 key={proc.id}
-                className={`transition-colors hover:bg-slate-800/35 ${
-                  proc.status === 'RUNNING' ? 'bg-cyan-500/5' : ''
-                }`}
+                className="transition-colors hover:bg-[var(--surface-subtle)]"
+                style={
+                  proc.status === 'RUNNING'
+                    ? { backgroundColor: 'var(--accent-soft)' }
+                    : undefined
+                }
               >
-                <td className="py-2.5 px-3 font-mono tabular-nums text-slate-200 font-medium whitespace-nowrap">
+                <td className="px-3 font-mono tabular-nums text-[var(--text-primary)] font-medium whitespace-nowrap">
                   {proc.id}
                 </td>
-                <td className="py-2.5 px-3 text-slate-200 whitespace-nowrap max-w-[160px] truncate">
+                <td className="px-3 text-[var(--text-primary)] whitespace-nowrap max-w-[160px] truncate">
                   {proc.name}
                 </td>
-                <td className={`py-2.5 px-3 font-mono whitespace-nowrap ${getStatusTextClass(proc.status)}`}>
+                <td className={`px-3 font-mono whitespace-nowrap ${getStatusTextClass(proc.status)}`}>
                   {proc.status}
                 </td>
-                <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-300 whitespace-nowrap">
+                <td className="px-3 text-right font-mono tabular-nums text-[var(--text-secondary)] whitespace-nowrap">
                   {proc.arrivalTime}t
                 </td>
-                <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-200 whitespace-nowrap">
+                <td className="px-3 text-right font-mono tabular-nums text-[var(--text-primary)] whitespace-nowrap">
                   {proc.remainingCpuTime} / {proc.cpuBurstTime}t
                 </td>
-                <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-300 whitespace-nowrap">
+                <td className="px-3 text-right font-mono tabular-nums text-[var(--text-secondary)] whitespace-nowrap">
                   P{proc.priority}
                 </td>
-                <td className="py-2.5 px-3 text-right font-mono tabular-nums whitespace-nowrap">
-                  <span className={proc.allocatedMemory > 0 ? 'text-emerald-400' : 'text-slate-500'}>
+                <td className="px-3 text-right font-mono tabular-nums whitespace-nowrap">
+                  <span
+                    className={
+                      proc.allocatedMemory > 0
+                        ? 'text-emerald-700 dark:text-emerald-400'
+                        : 'text-[var(--text-muted)]'
+                    }
+                  >
                     {proc.allocatedMemory}
                   </span>
-                  <span className="text-slate-600"> / </span>
-                  <span className="text-slate-300">{proc.memoryDemand} MB</span>
+                  <span className="text-[var(--text-muted)] opacity-60"> / </span>
+                  <span className="text-[var(--text-secondary)]">{proc.memoryDemand} MB</span>
                 </td>
-                <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-300 whitespace-nowrap">
+                <td className="px-3 text-right font-mono tabular-nums text-[var(--text-secondary)] whitespace-nowrap">
                   {proc.waitingTime}t
                 </td>
                 {!compact && (
                   <>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-400 whitespace-nowrap">
+                    <td className="px-3 text-right font-mono tabular-nums text-[var(--text-muted)] whitespace-nowrap">
                       {proc.responseTime !== null ? `${proc.responseTime}t` : '—'}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono tabular-nums text-slate-300 whitespace-nowrap">
+                    <td className="px-3 text-right font-mono tabular-nums text-[var(--text-secondary)] whitespace-nowrap">
                       {proc.turnaroundTime !== null ? `${proc.turnaroundTime}t` : '—'}
                     </td>
                   </>
                 )}
                 {(editable || onSelectDetail) && (
-                  <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                  <td className="px-3 text-right whitespace-nowrap">
                     <div className="inline-flex items-center gap-1">
                       {onSelectDetail && (
                         <button
                           type="button"
                           onClick={() => onSelectDetail(proc)}
                           aria-label={`Inspect process ${proc.id} ${proc.name}`}
-                          className="p-1.5 rounded-md text-slate-400 hover:bg-slate-800 hover:text-cyan-300 cursor-pointer"
+                          className="p-1.5 rounded-md text-[var(--text-muted)] hover:bg-[var(--surface-card-hover)] hover:text-[var(--accent-text)] cursor-pointer"
                         >
                           <Eye className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
@@ -261,7 +287,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({
                           type="button"
                           onClick={() => onEdit(proc)}
                           aria-label={`Edit process ${proc.id} ${proc.name}`}
-                          className="p-1.5 rounded-md text-slate-400 hover:bg-slate-800 hover:text-slate-100 cursor-pointer"
+                          className="p-1.5 rounded-md text-[var(--text-muted)] hover:bg-[var(--surface-card-hover)] hover:text-[var(--text-primary)] cursor-pointer"
                         >
                           <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>
@@ -271,7 +297,7 @@ export const ProcessTable: React.FC<ProcessTableProps> = ({
                           type="button"
                           onClick={() => onDelete(proc)}
                           aria-label={`Delete process ${proc.id} ${proc.name}`}
-                          className="p-1.5 rounded-md text-slate-400 hover:bg-red-500/15 hover:text-red-400 cursor-pointer"
+                          className="p-1.5 rounded-md text-[var(--text-muted)] hover:bg-red-500/15 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
                         >
                           <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
                         </button>

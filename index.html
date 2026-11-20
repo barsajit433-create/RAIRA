@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en" class="dark" data-theme="mission-control" data-appearance="dark" data-accent="cyan" data-density="spacious" data-motion="enabled">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,10 +12,27 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <script>
+      (function () {
+        try {
+          var raw = window.localStorage.getItem('raira_design_studio_v21');
+          if (!raw) return;
+          var parsed = JSON.parse(raw);
+          var theme = parsed.themeId || 'mission-control';
+          var appearance = theme === 'cyber-lab' ? 'dark' : (parsed.appearance || (theme === 'academic-research' || theme === 'minimal-enterprise' ? 'light' : 'dark'));
+          var root = document.documentElement;
+          root.dataset.theme = theme;
+          root.dataset.appearance = appearance;
+          root.dataset.accent = parsed.accentColor || 'cyan';
+          root.dataset.density = parsed.layoutDensity || 'spacious';
+          root.classList.toggle('dark', appearance === 'dark');
+          root.style.colorScheme = appearance;
+        } catch (e) {}
+      })();
+    </script>
   </head>
-  <body class="bg-[#060B14] text-slate-100 antialiased selection:bg-cyan-500/30 selection:text-cyan-100">
+  <body class="antialiased">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

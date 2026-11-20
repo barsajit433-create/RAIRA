@@ -198,18 +198,18 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
   const activeScenarioMeta = WORKLOAD_SCENARIOS[scenario];
 
   return (
-    <div className="space-y-6">
+    <div className="raira-section-stack">
       {errorBanner && (
         <div
           role="alert"
-          className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs text-red-300 flex items-center justify-between"
+          className="rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs text-red-700 dark:text-red-300 flex items-center justify-between"
         >
           <span>{errorBanner}</span>
           <button
             type="button"
             onClick={() => setErrorBanner(null)}
             aria-label="Dismiss error"
-            className="text-red-300 hover:text-white cursor-pointer"
+            className="text-red-700 dark:text-red-300 hover:opacity-80 cursor-pointer"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -219,14 +219,14 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
       {statusMessage && (
         <div
           role="status"
-          className="rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-300 flex items-center justify-between"
+          className="rounded-lg border border-emerald-500/35 bg-emerald-500/10 px-4 py-3 text-xs text-emerald-700 dark:text-emerald-300 flex items-center justify-between"
         >
           <span>{statusMessage}</span>
           <button
             type="button"
             onClick={() => setStatusMessage(null)}
             aria-label="Dismiss notice"
-            className="text-emerald-300 hover:text-white cursor-pointer"
+            className="text-emerald-700 dark:text-emerald-300 hover:opacity-80 cursor-pointer"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -235,14 +235,17 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Manual Process Creator */}
-        <section className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5 space-y-4">
+        <section className="raira-card raira-card-pad space-y-4">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h2 className="font-display text-base font-semibold text-slate-100">
-                {editingSlot !== null ? `Edit Process Slot #${editingSlot + 1}` : 'Create Process Manually'}
+              <h2 className="font-display text-base font-semibold text-[var(--text-primary)]">
+                {editingSlot !== null
+                  ? `Edit Process Slot #${editingSlot + 1}`
+                  : 'Create Process Manually'}
               </h2>
-              <p className="text-xs text-slate-400">
-                Up to 32 processes per episode · RAM cap 4096 MB · Priority 1 (lowest) to 5 (highest)
+              <p className="text-xs text-[var(--text-muted)]">
+                Up to 32 processes per episode · RAM cap 4096 MB · Priority 1 (lowest) to 5
+                (highest)
               </p>
             </div>
             {editingSlot !== null && (
@@ -252,7 +255,7 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
                   setEditingSlot(null);
                   setFormErrors({});
                 }}
-                className="text-xs text-slate-400 hover:text-slate-200 cursor-pointer"
+                className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] cursor-pointer"
               >
                 Cancel edit
               </button>
@@ -260,7 +263,7 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
           </div>
 
           {!canEdit && (
-            <div className="rounded-lg border border-amber-500/35 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-300">
+            <div className="rounded-lg border border-amber-500/35 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-800 dark:text-amber-300">
               Simulation is at tick {simulation?.currentTick}. Reset the simulation to tick 0 to
               add, edit, or delete individual processes.
             </div>
@@ -269,7 +272,10 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
           <form onSubmit={handleManualSubmit} noValidate className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="sm:col-span-2">
-                <label htmlFor="proc-name" className="block text-xs font-medium text-slate-300 mb-1">
+                <label
+                  htmlFor="proc-name"
+                  className="block text-xs font-medium text-[var(--text-secondary)] mb-1"
+                >
                   Process Name
                 </label>
                 <input
@@ -278,15 +284,18 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. matrix-solver-01"
-                  className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                  className="raira-input w-full rounded-lg px-3 py-2 text-sm placeholder:text-[var(--text-muted)]"
                 />
                 {formErrors.name && (
-                  <p className="mt-1 text-xs text-red-400">{formErrors.name}</p>
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">{formErrors.name}</p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="proc-arrival" className="block text-xs font-medium text-slate-300 mb-1">
+                <label
+                  htmlFor="proc-arrival"
+                  className="block text-xs font-medium text-[var(--text-secondary)] mb-1"
+                >
                   Arrival Time (ticks, 0–500)
                 </label>
                 <input
@@ -294,15 +303,20 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
                   type="number"
                   value={arrivalTime}
                   onChange={(e) => setArrivalTime(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-2 text-sm font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                  className="raira-input w-full rounded-lg px-3 py-2 text-sm font-mono"
                 />
                 {formErrors.arrivalTime && (
-                  <p className="mt-1 text-xs text-red-400">{formErrors.arrivalTime}</p>
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                    {formErrors.arrivalTime}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="proc-burst" className="block text-xs font-medium text-slate-300 mb-1">
+                <label
+                  htmlFor="proc-burst"
+                  className="block text-xs font-medium text-[var(--text-secondary)] mb-1"
+                >
                   CPU Burst Time (ticks, 1–100)
                 </label>
                 <input
@@ -310,15 +324,20 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
                   type="number"
                   value={cpuBurstTime}
                   onChange={(e) => setCpuBurstTime(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-2 text-sm font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                  className="raira-input w-full rounded-lg px-3 py-2 text-sm font-mono"
                 />
                 {formErrors.cpuBurstTime && (
-                  <p className="mt-1 text-xs text-red-400">{formErrors.cpuBurstTime}</p>
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                    {formErrors.cpuBurstTime}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="proc-priority" className="block text-xs font-medium text-slate-300 mb-1">
+                <label
+                  htmlFor="proc-priority"
+                  className="block text-xs font-medium text-[var(--text-secondary)] mb-1"
+                >
                   Priority (1 lowest – 5 highest)
                 </label>
                 <input
@@ -326,15 +345,20 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
                   type="number"
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-2 text-sm font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                  className="raira-input w-full rounded-lg px-3 py-2 text-sm font-mono"
                 />
                 {formErrors.priority && (
-                  <p className="mt-1 text-xs text-red-400">{formErrors.priority}</p>
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                    {formErrors.priority}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="proc-memory" className="block text-xs font-medium text-slate-300 mb-1">
+                <label
+                  htmlFor="proc-memory"
+                  className="block text-xs font-medium text-[var(--text-secondary)] mb-1"
+                >
                   Memory Demand (MB, 16–4096)
                 </label>
                 <input
@@ -342,22 +366,24 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
                   type="number"
                   value={memoryDemand}
                   onChange={(e) => setMemoryDemand(e.target.value)}
-                  className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-2 text-sm font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                  className="raira-input w-full rounded-lg px-3 py-2 text-sm font-mono"
                 />
                 {formErrors.memoryDemand && (
-                  <p className="mt-1 text-xs text-red-400">{formErrors.memoryDemand}</p>
+                  <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                    {formErrors.memoryDemand}
+                  </p>
                 )}
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              <span className="text-xs font-mono tabular-nums text-slate-500">
+              <span className="text-xs font-mono tabular-nums text-[var(--text-muted)]">
                 Slots used: {currentSpecs.length} / {SYSTEM_CONFIG.MAX_PROCESSES}
               </span>
               <button
                 type="submit"
                 disabled={!canEdit}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-40 transition-colors cursor-pointer"
+                className="raira-btn-primary inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold disabled:opacity-40 cursor-pointer"
               >
                 {editingSlot !== null ? (
                   <>
@@ -376,12 +402,12 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
         </section>
 
         {/* Automatic Workload Generator */}
-        <section className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5 space-y-4">
+        <section className="raira-card raira-card-pad space-y-4">
           <div>
-            <h2 className="font-display text-base font-semibold text-slate-100">
+            <h2 className="font-display text-base font-semibold text-[var(--text-primary)]">
               Automatic Workload Generator
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[var(--text-muted)]">
               Seeded Mulberry32 generator — identical random seeds guarantee identical workloads
             </p>
           </div>
@@ -400,13 +426,26 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
                   onClick={() => setScenario(sc.type)}
                   aria-pressed={active}
                   className={`text-left rounded-lg border px-3 py-2.5 transition-colors cursor-pointer ${
-                    active
-                      ? 'border-cyan-500/50 bg-cyan-500/12 text-cyan-200'
-                      : 'border-slate-800 bg-[#080F1D] text-slate-300 hover:border-slate-700'
+                    active ? 'font-medium' : 'raira-subtle hover:border-[var(--accent-border)]'
                   }`}
+                  style={
+                    active
+                      ? {
+                          borderColor: 'var(--accent-border)',
+                          backgroundColor: 'var(--accent-soft)',
+                          color: 'var(--accent-text)',
+                        }
+                      : undefined
+                  }
                 >
-                  <div className="text-xs font-semibold">{sc.shortLabel}</div>
-                  <div className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
+                  <div
+                    className={`text-xs font-semibold ${
+                      active ? 'text-[var(--accent-text)]' : 'text-[var(--text-primary)]'
+                    }`}
+                  >
+                    {sc.shortLabel}
+                  </div>
+                  <div className="text-[11px] text-[var(--text-muted)] mt-0.5 line-clamp-1">
                     {sc.characteristics}
                   </div>
                 </button>
@@ -414,14 +453,19 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
             })}
           </div>
 
-          <div className="rounded-lg border border-slate-800/80 bg-[#080F1D] px-3.5 py-2.5 text-xs text-slate-300 leading-relaxed">
-            <span className="font-semibold text-slate-200">{activeScenarioMeta.label}: </span>
+          <div className="raira-subtle rounded-lg px-3.5 py-2.5 text-xs text-[var(--text-secondary)] leading-relaxed">
+            <span className="font-semibold text-[var(--text-primary)]">
+              {activeScenarioMeta.label}:{' '}
+            </span>
             {activeScenarioMeta.description}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="wg-count" className="block text-xs font-medium text-slate-300 mb-1">
+              <label
+                htmlFor="wg-count"
+                className="block text-xs font-medium text-[var(--text-secondary)] mb-1"
+              >
                 Processes (1–32)
               </label>
               <input
@@ -433,12 +477,15 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
                 onChange={(e) =>
                   setNumProcesses(Math.max(1, Math.min(32, Number(e.target.value) || 1)))
                 }
-                className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-2 text-sm font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                className="raira-input w-full rounded-lg px-3 py-2 text-sm font-mono"
               />
             </div>
 
             <div>
-              <label htmlFor="wg-seed" className="block text-xs font-medium text-slate-300 mb-1">
+              <label
+                htmlFor="wg-seed"
+                className="block text-xs font-medium text-[var(--text-secondary)] mb-1"
+              >
                 Random Seed
               </label>
               <div className="flex items-center gap-1.5">
@@ -447,13 +494,13 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
                   type="number"
                   value={seed}
                   onChange={(e) => setSeed(Number(e.target.value) || 0)}
-                  className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-2 text-sm font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                  className="raira-input w-full rounded-lg px-3 py-2 text-sm font-mono"
                 />
                 <button
                   type="button"
                   onClick={() => setSeed(Math.floor(Math.random() * 9000) + 1000)}
                   aria-label="Randomize seed"
-                  className="h-[38px] w-[38px] shrink-0 inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 cursor-pointer"
+                  className="raira-btn-secondary h-[38px] w-[38px] shrink-0 inline-flex items-center justify-center rounded-lg cursor-pointer"
                 >
                   <Shuffle className="h-4 w-4" aria-hidden="true" />
                 </button>
@@ -466,7 +513,7 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
               type="button"
               onClick={() => handleGenerateWorkload(true)}
               disabled={generating}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-500 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50 transition-colors cursor-pointer"
+              className="raira-btn-primary inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold disabled:opacity-50 cursor-pointer"
             >
               <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
               <span>Generate &amp; Load Workload</span>
@@ -475,7 +522,7 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
               type="button"
               onClick={() => handleGenerateWorkload(false)}
               disabled={generating}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3.5 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800 disabled:opacity-50 transition-colors cursor-pointer"
+              className="raira-btn-secondary inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-medium disabled:opacity-50 cursor-pointer"
             >
               <span>Preview Only</span>
             </button>
@@ -485,13 +532,16 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
 
       {/* Workload Preview Table if previewed */}
       {previewSpecs && previewSpecs.length > 0 && (
-        <section className="rounded-xl border border-cyan-500/30 bg-[#0B1221] p-5 space-y-3">
+        <section
+          className="raira-card raira-card-pad space-y-3"
+          style={{ borderColor: 'var(--accent-border)' }}
+        >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="font-display text-sm font-semibold text-slate-100">
+              <h3 className="font-display text-sm font-semibold text-[var(--text-primary)]">
                 Generated Workload Preview · {formatWorkloadName(scenario)} · Seed {seed}
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--text-muted)]">
                 {previewSpecs.length} processes · Total CPU burst{' '}
                 {previewSpecs.reduce((a, p) => a + p.cpuBurstTime, 0)}t · Aggregate RAM demand{' '}
                 {previewSpecs.reduce((a, p) => a + p.memoryDemand, 0)} MB
@@ -501,14 +551,14 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
               <button
                 type="button"
                 onClick={handleApplyPreview}
-                className="rounded-lg bg-emerald-500 px-3.5 py-1.5 text-xs font-semibold text-slate-950 hover:bg-emerald-400 cursor-pointer"
+                className="rounded-lg bg-emerald-600 dark:bg-emerald-500 px-3.5 py-1.5 text-xs font-semibold text-white dark:text-slate-950 hover:bg-emerald-500 dark:hover:bg-emerald-400 cursor-pointer"
               >
                 Apply to Simulator
               </button>
               <button
                 type="button"
                 onClick={() => setPreviewSpecs(null)}
-                className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-300 hover:bg-slate-800 cursor-pointer"
+                className="raira-btn-secondary rounded-lg px-3 py-1.5 text-xs cursor-pointer"
               >
                 Close Preview
               </button>
@@ -516,26 +566,35 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
           </div>
 
           <div className="overflow-x-auto max-h-56">
-            <table className="w-full text-left border-collapse text-xs">
+            <table className="raira-table w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-slate-800 text-slate-400">
-                  <th className="py-2 px-3">PID</th>
-                  <th className="py-2 px-3">Name</th>
-                  <th className="py-2 px-3 text-right">Arrival</th>
-                  <th className="py-2 px-3 text-right">CPU Burst</th>
-                  <th className="py-2 px-3 text-right">Priority</th>
-                  <th className="py-2 px-3 text-right">RAM Demand</th>
+                <tr
+                  className="border-b text-[var(--text-muted)]"
+                  style={{ borderColor: 'var(--border-subtle)' }}
+                >
+                  <th className="px-3">PID</th>
+                  <th className="px-3">Name</th>
+                  <th className="px-3 text-right">Arrival</th>
+                  <th className="px-3 text-right">CPU Burst</th>
+                  <th className="px-3 text-right">Priority</th>
+                  <th className="px-3 text-right">RAM Demand</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60 font-mono tabular-nums">
+              <tbody className="divide-y font-mono tabular-nums">
                 {previewSpecs.map((p) => (
-                  <tr key={p.id}>
-                    <td className="py-1.5 px-3 text-slate-200">{p.id}</td>
-                    <td className="py-1.5 px-3 font-sans text-slate-300">{p.name}</td>
-                    <td className="py-1.5 px-3 text-right text-slate-300">{p.arrivalTime}t</td>
-                    <td className="py-1.5 px-3 text-right text-slate-200">{p.cpuBurstTime}t</td>
-                    <td className="py-1.5 px-3 text-right text-slate-300">P{p.priority}</td>
-                    <td className="py-1.5 px-3 text-right text-cyan-300">{p.memoryDemand} MB</td>
+                  <tr key={p.id} style={{ borderColor: 'var(--border-subtle)' }}>
+                    <td className="px-3 text-[var(--text-primary)] font-medium">{p.id}</td>
+                    <td className="px-3 font-sans text-[var(--text-secondary)]">{p.name}</td>
+                    <td className="px-3 text-right text-[var(--text-secondary)]">
+                      {p.arrivalTime}t
+                    </td>
+                    <td className="px-3 text-right text-[var(--text-primary)]">
+                      {p.cpuBurstTime}t
+                    </td>
+                    <td className="px-3 text-right text-[var(--text-secondary)]">P{p.priority}</td>
+                    <td className="px-3 text-right text-[var(--accent-text)] font-medium">
+                      {p.memoryDemand} MB
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -548,11 +607,12 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
       <section className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-display text-base font-semibold text-slate-100">
+            <h2 className="font-display text-base font-semibold text-[var(--text-primary)]">
               Active Episode Process Table
             </h2>
-            <p className="text-xs text-slate-400">
-              Filter by status, sort by column, inspect all 14 OS attributes, or edit before execution
+            <p className="text-xs text-[var(--text-muted)]">
+              Filter by status, sort by column, inspect all 14 OS attributes, or edit before
+              execution
             </p>
           </div>
         </div>
@@ -568,13 +628,16 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
 
       {/* Process Details Inspector Panel */}
       {inspectedProc && (
-        <section className="rounded-xl border border-slate-700 bg-[#0D1629] p-5 space-y-4">
+        <section
+          className="raira-card raira-card-pad space-y-4"
+          style={{ borderColor: 'var(--border-strong)' }}
+        >
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-display text-sm font-semibold text-slate-100">
+              <h3 className="font-display text-sm font-semibold text-[var(--text-primary)]">
                 Process Control Block Inspector · {inspectedProc.id} ({inspectedProc.name})
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--text-muted)]">
                 Stable Slot Index #{inspectedProc.slotIndex} ·{' '}
                 <span className={getStatusTextClass(inspectedProc.status)}>
                   {inspectedProc.status}
@@ -585,7 +648,7 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
               type="button"
               onClick={() => setInspectedProc(null)}
               aria-label="Close process inspector"
-              className="p-1.5 rounded-md text-slate-400 hover:bg-slate-800 hover:text-white cursor-pointer"
+              className="raira-btn-secondary p-1.5 rounded-md cursor-pointer"
             >
               <X className="h-4 w-4" aria-hidden="true" />
             </button>
@@ -617,9 +680,11 @@ export const ProcessManager: React.FC<ProcessManagerProps> = ({
               ['Status', inspectedProc.status],
               ['Slot Mapping', `Slot ${inspectedProc.slotIndex}`],
             ].map(([k, v]) => (
-              <div key={k} className="rounded-lg border border-slate-800/80 bg-[#080F1D] p-2.5">
-                <dt className="text-slate-500 text-[11px]">{k}</dt>
-                <dd className="mt-1 font-mono tabular-nums text-slate-100 font-medium">{v}</dd>
+              <div key={k} className="raira-subtle rounded-lg p-2.5">
+                <dt className="text-[var(--text-muted)] text-[11px]">{k}</dt>
+                <dd className="mt-1 font-mono tabular-nums text-[var(--text-primary)] font-medium">
+                  {v}
+                </dd>
               </div>
             ))}
           </dl>

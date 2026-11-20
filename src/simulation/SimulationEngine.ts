@@ -14,9 +14,18 @@ import type {
   SystemEvent,
   TickTelemetry,
 } from '../types/simulation.ts';
+import type {
+  DecisionExplanation,
+  TimelineProcessCell,
+  TimelineTickRecord,
+} from '../types/intelligence.ts';
 import { cloneProcessRecord, cloneProcessSpec, createProcessRecord } from './Process.ts';
 import { ResourceManager } from './ResourceManager.ts';
 import { calculateSimulationMetrics, computeJainFairnessIndex } from './MetricsCalculator.ts';
+import {
+  computeFairnessMonitorSnapshot,
+  DEFAULT_STARVATION_THRESHOLD,
+} from './FairnessMonitor.ts';
 import {
   admitBlockedProcessesForBaseline,
   createBaselineSchedulerState,
@@ -73,9 +82,12 @@ export class SimulationEngine {
 
   private baselineState: BaselineSchedulerState = createBaselineSchedulerState();
   private telemetryHistory: TickTelemetry[] = [];
+  private timelineTicks: TimelineTickRecord[] = [];
   private recentDecisions: AllocationDecision[] = [];
+  private explanationHistory: DecisionExplanation[] = [];
   private eventLog: SystemEvent[] = [];
   private eventCounter: number = 0;
+  private starvationThreshold: number = DEFAULT_STARVATION_THRESHOLD;
 
   constructor(options?: {
     totalRamMb?: number;
@@ -153,6 +165,128 @@ export class SimulationEngine {
     return { ...this.rewardWeights };
   }
 
+  getRRQuantum(): number {
+    return this.rrQuantum;
+  }
+
+  getWorkloadType(): WorkloadType {
+    return this.workloadType;
+  }
+
+  getSeed(): number {
+    return this.seed;
+  }
+
+  getStarvationThreshold(): number {
+    return this.starvationThreshold;
+  }
+
+  setStarvationThreshold(threshold: number): void {
+    this.starvationThreshold = Math.max(1, Math.min(200, Math.floor(threshold)));
+  }
+
+  getLastTickCpuBusy(): boolean {
+    return this.lastTickCpuBusy;
+  }
+
+  recordDecisionExplanation(explanation: DecisionExplanation): void {
+    this.explanationHistory.unshift(explanation);
+    if (this.explanationHistory.length > 30) {
+      this.explanationHistory.length = 30;
+    }
+  }
+
+  getExplanationHistory(): DecisionExplanation[] {
+    return [...this.explanationHistory];
+  }
+
+  getTimelineTicks(): TimelineTickRecord[] {
+    return [...this.timelineTicks];
+  }
+
+  /**
+   * Creates a 100% isolated deep clone of the simulator at its exact current tick.
+   * Future NEW arrivals, RAM reservations, waiting times, and RR queues are preserved identically
+   * so counterfactual simulations never mutate the live engine.
+   */
+  clone(): SimulationEngine {
+    const copy = new SimulationEngine({
+      totalRamMb: this.resourceManager.totalRamMb,
+      maxTicks: this.maxTicks,
+      rrQuantum: this.rrQuantum,
+      rewardWeights: { ...this.rewardWeights },
+    });
+    (copy as unknown as { resourceManager: ResourceManager }).resourceManager =
+      this.resourceManager.clone();
+    copy.initialSpecs = this.initialSpecs.map(cloneProcessSpec);
+    copy.processes = this.processes.map(cloneProcessRecord);
+    copy.status = this.status;
+    copy.algorithm = this.algorithm;
+    copy.workloadType = this.workloadType;
+    copy.seed = this.seed;
+    copy.currentTick = this.currentTick;
+    copy.cpuBusyTicks = this.cpuBusyTicks;
+    copy.lastTickCpuBusy = this.lastTickCpuBusy;
+    copy.cumulativeRamUtilPercent = this.cumulativeRamUtilPercent;
+    copy.runningSlot = this.runningSlot;
+    copy.lastExecutedSlot = this.lastExecutedSlot;
+    copy.totalEpisodeReward = this.totalEpisodeReward;
+    copy.contextSwitches = this.contextSwitches;
+    copy.invalidActionCount = this.invalidActionCount;
+    copy.baselineState = {
+      rrQueue: [...this.baselineState.rrQueue],
+      rrSliceRemaining: this.baselineState.rrSliceRemaining,
+    };
+    copy.telemetryHistory = this.telemetryHistory.map((t) => ({ ...t }));
+    copy.timelineTicks = this.timelineTicks.map((t) => ({
+      ...t,
+      cells: Object.fromEntries(
+        Object.entries(t.cells).map(([k, v]) => [k, { ...v }])
+      ),
+    }));
+    copy.recentDecisions = this.recentDecisions.map((d) => ({
+      ...d,
+      rewardBreakdown: { ...d.rewardBreakdown },
+    }));
+    copy.explanationHistory = [...this.explanationHistory];
+    copy.eventLog = this.eventLog.map((e) => ({ ...e }));
+    copy.eventCounter = this.eventCounter;
+    copy.starvationThreshold = this.starvationThreshold;
+    return copy;
+  }
+
+  /**
+   * Injects additional workload disturbance processes mid-episode (used by Workload Shock Arena).
+   * Enforces the 32-slot architecture limit so observation/action spaces remain valid.
+   */
+  injectShockProcesses(specs: ProcessSpec[], logMessage?: string): ProcessRecord[] {
+    const availableSlots = SYSTEM_CONFIG.MAX_PROCESSES - this.processes.length;
+    if (availableSlots <= 0 || specs.length === 0) return [];
+
+    const toInject = specs.slice(0, availableSlots);
+    const created: ProcessRecord[] = [];
+    for (const raw of toInject) {
+      const slotIndex = this.processes.length;
+      const spec: ProcessSpec = {
+        ...cloneProcessSpec(raw),
+        slotIndex,
+        id: raw.id || `S${String(slotIndex + 1).padStart(2, '0')}`,
+        arrivalTime: Math.max(this.currentTick, Math.floor(raw.arrivalTime)),
+      };
+      const record = createProcessRecord(spec);
+      if (record.arrivalTime <= this.currentTick) {
+        record.status = 'BLOCKED';
+      }
+      this.processes.push(record);
+      created.push(record);
+    }
+
+    if (created.length > 0 && logMessage) {
+      this.logEvent('warning', 'SYSTEM', logMessage);
+    }
+    return created;
+  }
+
   resetEpisode(): void {
     this.resourceManager.reset();
     this.processes = this.initialSpecs.map(createProcessRecord);
@@ -168,7 +302,9 @@ export class SimulationEngine {
     this.invalidActionCount = 0;
     this.baselineState = createBaselineSchedulerState();
     this.telemetryHistory = [];
+    this.timelineTicks = [];
     this.recentDecisions = [];
+    this.explanationHistory = [];
     this.eventLog = [];
     this.eventCounter = 0;
 
@@ -270,6 +406,48 @@ export class SimulationEngine {
     }
   }
 
+  private recordTimelineTick(params: {
+    runningProcId: string | null;
+    admittedIds?: Set<string>;
+    completedProcId?: string | null;
+    preemptedProcId?: string | null;
+    quantumUsed?: number;
+  }): void {
+    const cells: Record<string, TimelineProcessCell> = {};
+    for (const p of this.processes) {
+      const wasRunningThisTick = params.runningProcId === p.id;
+      const completedHere = params.completedProcId === p.id;
+      const effectiveStatus = wasRunningThisTick
+        ? 'RUNNING'
+        : p.status;
+      cells[p.id] = {
+        processId: p.id,
+        status: completedHere ? 'RUNNING' : effectiveStatus,
+        allocatedMemoryMb:
+          completedHere && p.allocatedMemory === 0 ? p.memoryDemand : p.allocatedMemory,
+        preemptedAtTick: params.preemptedProcId === p.id,
+        completedAtTick: completedHere,
+        admittedAtTick: params.admittedIds?.has(p.id) ?? false,
+        quantumUsed: wasRunningThisTick ? (params.quantumUsed ?? 1) : 0,
+      };
+    }
+
+    this.timelineTicks.push({
+      tick: this.currentTick,
+      runningProcessId: params.runningProcId,
+      totalAllocatedRamMb: this.resourceManager.getAllocatedRamMb(),
+      availableRamMb: this.resourceManager.getAvailableRamMb(),
+      preemptedProcessId: params.preemptedProcId ?? null,
+      completedProcessId: params.completedProcId ?? null,
+      quantumUsed: params.quantumUsed ?? 0,
+      cells,
+    });
+
+    if (this.timelineTicks.length > 600) {
+      this.timelineTicks.shift();
+    }
+  }
+
   /**
    * Executes one Discrete(97) RL action using SMDP multi-tick execution.
    * Processes new arrivals on every tick, enforces strict CPU (single-core) & RAM (4096 MB)
@@ -350,6 +528,7 @@ export class SimulationEngine {
 
       this.totalEpisodeReward += tickReward.total;
       this.recordTickTelemetry(null, tickReward.total);
+      this.recordTimelineTick({ runningProcId: null, quantumUsed: 0 });
 
       if (recordLogs) {
         this.logEvent(
@@ -415,6 +594,7 @@ export class SimulationEngine {
 
       this.totalEpisodeReward += tickReward.total;
       this.recordTickTelemetry(null, tickReward.total);
+      this.recordTimelineTick({ runningProcId: null, quantumUsed: 0 });
 
       if (recordLogs) {
         this.logEvent('info', 'IDLE', `CPU idle (WAIT) for 1 tick at t=${startTick}.`);
@@ -558,6 +738,12 @@ export class SimulationEngine {
 
       tickBreakdowns.push(tickBreakdown);
       this.recordTickTelemetry(targetProc.id, tickBreakdown.total);
+      this.recordTimelineTick({
+        runningProcId: targetProc.id,
+        admittedIds: step === 0 && admittedFromBlocked ? new Set([targetProc.id]) : undefined,
+        completedProcId: completedProc ? completedProc.id : null,
+        quantumUsed: decoded.quantum,
+      });
 
       // Process arrivals that happen at the newly reached tick
       this.processArrivalsAtCurrentTick();
@@ -573,6 +759,13 @@ export class SimulationEngine {
       targetProc.status = 'READY';
       this.runningSlot = null;
       preempted = true;
+      const lastTimeline = this.timelineTicks[this.timelineTicks.length - 1];
+      if (lastTimeline) {
+        lastTimeline.preemptedProcessId = targetProc.id;
+        if (lastTimeline.cells[targetProc.id]) {
+          lastTimeline.cells[targetProc.id].preemptedAtTick = true;
+        }
+      }
       if (recordLogs) {
         this.logEvent(
           'warning',
@@ -717,6 +910,11 @@ export class SimulationEngine {
 
       this.totalEpisodeReward += tickBreakdown.total;
       this.recordTickTelemetry(null, tickBreakdown.total);
+      this.recordTimelineTick({
+        runningProcId: null,
+        admittedIds: admitted.length > 0 ? new Set(admitted.map((p) => p.id)) : undefined,
+        quantumUsed: 0,
+      });
 
       if (recordLogs) {
         const blockedCount = this.processes.filter((p) => p.status === 'BLOCKED').length;
@@ -850,6 +1048,13 @@ export class SimulationEngine {
 
     this.totalEpisodeReward += tickBreakdown.total;
     this.recordTickTelemetry(proc.id, tickBreakdown.total);
+    this.recordTimelineTick({
+      runningProcId: proc.id,
+      admittedIds: admitted.length > 0 ? new Set(admitted.map((p) => p.id)) : undefined,
+      completedProcId: completedProc ? completedProc.id : null,
+      preemptedProcId: preempted ? proc.id : null,
+      quantumUsed: algorithm === 'RR' ? this.rrQuantum : 1,
+    });
     this.processArrivalsAtCurrentTick();
 
     const decision: AllocationDecision = {
@@ -916,6 +1121,7 @@ export class SimulationEngine {
   }
 
   getSnapshot(rlTrainedStatus: { qLearningTrained: boolean; dqnTrained: boolean }): SimulationSnapshot {
+    const clonedProcesses = this.processes.map(cloneProcessRecord);
     return {
       status: this.status,
       algorithm: this.algorithm,
@@ -925,7 +1131,7 @@ export class SimulationEngine {
       maxTicks: this.maxTicks,
       currentTick: this.currentTick,
       runningSlot: this.runningSlot,
-      processes: this.processes.map(cloneProcessRecord),
+      processes: clonedProcesses,
       initialSpecs: this.initialSpecs.map(cloneProcessSpec),
       metrics: this.getMetrics(),
       telemetryHistory: [...this.telemetryHistory],
@@ -933,6 +1139,15 @@ export class SimulationEngine {
       eventLog: [...this.eventLog],
       rewardWeights: { ...this.rewardWeights },
       rlTrainedStatus,
+      timelineTicks: [...this.timelineTicks],
+      latestExplanation: this.explanationHistory[0] ?? null,
+      explanationHistory: [...this.explanationHistory],
+      fairnessMonitor: computeFairnessMonitorSnapshot({
+        processes: clonedProcesses,
+        currentTick: this.currentTick,
+        rewardWeights: this.rewardWeights,
+        starvationThreshold: this.starvationThreshold,
+      }),
     };
   }
 }

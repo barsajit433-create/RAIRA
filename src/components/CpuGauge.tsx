@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '../theme/ThemeContext';
 
 interface CpuGaugeProps {
   currentCpuUtil: number;
@@ -15,6 +16,7 @@ export const CpuGauge: React.FC<CpuGaugeProps> = ({
   totalTicks,
   runningProcessLabel,
 }) => {
+  const { chartTheme } = useTheme();
   const displayPercent = Math.max(0, Math.min(100, avgCpuUtil));
   const radius = 58;
   const strokeWidth = 10;
@@ -23,23 +25,25 @@ export const CpuGauge: React.FC<CpuGaugeProps> = ({
 
   const strokeColor =
     displayPercent >= 85
-      ? '#10B981'
+      ? chartTheme.success
       : displayPercent >= 45
-        ? '#06B6D4'
+        ? chartTheme.primary
         : displayPercent > 0
-          ? '#F59E0B'
-          : '#334155';
+          ? chartTheme.warning
+          : chartTheme.neutralTrack;
 
   return (
-    <div className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5 flex flex-col justify-between">
+    <div className="raira-card raira-card-pad flex flex-col justify-between">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h3 className="font-display text-sm font-semibold text-slate-100">
+          <h3 className="font-display text-sm font-semibold text-[var(--text-primary)]">
             CPU Utilisation Gauge
           </h3>
-          <p className="text-xs text-slate-400">Single-core capacity (100% ceiling)</p>
+          <p className="text-xs text-[var(--text-muted)]">
+            Single-core capacity (100% ceiling)
+          </p>
         </div>
-        <span className="font-mono tabular-nums text-xs text-slate-400">
+        <span className="font-mono tabular-nums text-xs text-[var(--text-muted)]">
           {currentCpuUtil > 0 ? 'Core Busy' : 'Core Idle'}
         </span>
       </div>
@@ -57,7 +61,7 @@ export const CpuGauge: React.FC<CpuGaugeProps> = ({
               cy="70"
               r={radius}
               fill="none"
-              stroke="#1E293B"
+              stroke={chartTheme.neutralTrack}
               strokeWidth={strokeWidth}
             />
             <circle
@@ -74,24 +78,27 @@ export const CpuGauge: React.FC<CpuGaugeProps> = ({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <span className="font-mono tabular-nums text-2xl font-bold text-slate-100">
+            <span className="font-mono tabular-nums text-2xl font-bold text-[var(--text-primary)]">
               {displayPercent.toFixed(1)}%
             </span>
-            <span className="text-[11px] text-slate-400">Avg Util</span>
+            <span className="text-[11px] text-[var(--text-muted)]">Avg Util</span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800/70 text-xs">
+      <div
+        className="grid grid-cols-2 gap-3 pt-3 border-t text-xs"
+        style={{ borderColor: 'var(--border-subtle)' }}
+      >
         <div>
-          <div className="text-slate-500">Active Core Task</div>
-          <div className="font-mono tabular-nums text-slate-200 truncate mt-0.5">
+          <div className="text-[var(--text-muted)]">Active Core Task</div>
+          <div className="font-mono tabular-nums text-[var(--text-secondary)] truncate mt-0.5">
             {runningProcessLabel ?? 'None (Idle)'}
           </div>
         </div>
         <div className="text-right">
-          <div className="text-slate-500">Busy / Total Ticks</div>
-          <div className="font-mono tabular-nums text-slate-200 mt-0.5">
+          <div className="text-[var(--text-muted)]">Busy / Total Ticks</div>
+          <div className="font-mono tabular-nums text-[var(--text-secondary)] mt-0.5">
             {busyTicks} / {totalTicks}
           </div>
         </div>

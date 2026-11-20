@@ -1,0 +1,987 @@
+{
+  "id": "statval-mwpca1wj",
+  "timestamp": "2026-11-20T18:55:23.683Z",
+  "config": {
+    "seedStart": 1001,
+    "seedCount": 30,
+    "workloads": [
+      "CPU_INTENSIVE",
+      "MEMORY_INTENSIVE",
+      "MIXED",
+      "DYNAMIC"
+    ],
+    "numProcesses": 10,
+    "rrQuantum": 2,
+    "starvationThreshold": 15,
+    "includeUntrainedComparison": true,
+    "includeAblationStudy": true
+  },
+  "evaluationSeeds": [
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009,
+    1010,
+    1011,
+    1012,
+    1013,
+    1014,
+    1015,
+    1016,
+    1017,
+    1018,
+    1019,
+    1020,
+    1021,
+    1022,
+    1023,
+    1024,
+    1025,
+    1026,
+    1027,
+    1028,
+    1029,
+    1030
+  ],
+  "trainingSeedRangeDescription": "Bundled pretrained models trained on MIXED workloads using seeds 42 + 17k (42..875).",
+  "disjointFromTrainingSeeds": true,
+  "totalEpisodesExecuted": 930,
+  "durationMs": 22795,
+  "overallSummaries": [
+    {
+      "policyKey": "FCFS",
+      "algorithm": "FCFS",
+      "label": "FCFS",
+      "isTrainedModel": true,
+      "sampleCount": 120,
+      "waitingTime": {
+        "mean": 53.67,
+        "stdDev": 27.38,
+        "ci95Low": 48.72,
+        "ci95High": 58.61,
+        "median": 41.15,
+        "p95": 108.63,
+        "min": 20.2,
+        "max": 115.4
+      },
+      "turnaroundTime": {
+        "mean": 67.6,
+        "stdDev": 32.82,
+        "ci95Low": 61.67,
+        "ci95High": 73.53,
+        "median": 52.75,
+        "p95": 133.96,
+        "min": 28.9,
+        "max": 141.2
+      },
+      "cpuUtilisation": {
+        "mean": 99.83,
+        "stdDev": 0.5,
+        "ci95Low": 99.74,
+        "ci95High": 99.92,
+        "median": 100,
+        "p95": 100,
+        "min": 97.37,
+        "max": 100
+      },
+      "ramUtilisation": {
+        "mean": 64.71,
+        "stdDev": 11.9,
+        "ci95Low": 62.55,
+        "ci95High": 66.86,
+        "median": 66.47,
+        "p95": 80.25,
+        "min": 30.61,
+        "max": 87.59
+      },
+      "throughput": {
+        "mean": 8.15,
+        "stdDev": 2.59,
+        "ci95Low": 7.68,
+        "ci95High": 8.61,
+        "median": 8.4,
+        "p95": 12.05,
+        "min": 3.68,
+        "max": 12.82
+      },
+      "jainFairness": {
+        "mean": 0.6338,
+        "stdDev": 0.0943,
+        "ci95Low": 0.6168,
+        "ci95High": 0.6509,
+        "median": 0.6375,
+        "p95": 0.7692,
+        "min": 0.3569,
+        "max": 0.8027
+      },
+      "serviceShareFairness": {
+        "mean": 0.8008,
+        "stdDev": 0.0415,
+        "ci95Low": 0.7933,
+        "ci95High": 0.8083,
+        "median": 0.8046,
+        "p95": 0.8573,
+        "min": 0.6624,
+        "max": 0.9098
+      },
+      "episodeReward": {
+        "mean": 255.05,
+        "stdDev": 35.89,
+        "ci95Low": 248.57,
+        "ci95High": 261.54,
+        "median": 245.86,
+        "p95": 324.44,
+        "min": 204.09,
+        "max": 350.08
+      },
+      "invalidActionsTotal": 0,
+      "starvationEventsTotal": 991
+    },
+    {
+      "policyKey": "RR",
+      "algorithm": "RR",
+      "label": "Round Robin (q=2)",
+      "isTrainedModel": true,
+      "sampleCount": 120,
+      "waitingTime": {
+        "mean": 75.35,
+        "stdDev": 51.52,
+        "ci95Low": 66.03,
+        "ci95High": 84.66,
+        "median": 51.95,
+        "p95": 177.8,
+        "min": 21.6,
+        "max": 197.4
+      },
+      "turnaroundTime": {
+        "mean": 89.28,
+        "stdDev": 57.03,
+        "ci95Low": 78.97,
+        "ci95High": 99.58,
+        "median": 63.75,
+        "p95": 202.24,
+        "min": 30.3,
+        "max": 223.2
+      },
+      "cpuUtilisation": {
+        "mean": 99.83,
+        "stdDev": 0.5,
+        "ci95Low": 99.74,
+        "ci95High": 99.92,
+        "median": 100,
+        "p95": 100,
+        "min": 97.37,
+        "max": 100
+      },
+      "ramUtilisation": {
+        "mean": 75.59,
+        "stdDev": 6.53,
+        "ci95Low": 74.4,
+        "ci95High": 76.77,
+        "median": 75.8,
+        "p95": 85.92,
+        "min": 53.24,
+        "max": 89.77
+      },
+      "throughput": {
+        "mean": 8.15,
+        "stdDev": 2.59,
+        "ci95Low": 7.68,
+        "ci95High": 8.61,
+        "median": 8.4,
+        "p95": 12.05,
+        "min": 3.68,
+        "max": 12.82
+      },
+      "jainFairness": {
+        "mean": 0.847,
+        "stdDev": 0.1017,
+        "ci95Low": 0.8286,
+        "ci95High": 0.8654,
+        "median": 0.8379,
+        "p95": 0.9926,
+        "min": 0.6088,
+        "max": 0.9969
+      },
+      "serviceShareFairness": {
+        "mean": 0.9182,
+        "stdDev": 0.0647,
+        "ci95Low": 0.9065,
+        "ci95High": 0.9299,
+        "median": 0.9291,
+        "p95": 0.9985,
+        "min": 0.788,
+        "max": 0.9993
+      },
+      "episodeReward": {
+        "mean": 233.97,
+        "stdDev": 15.47,
+        "ci95Low": 231.18,
+        "ci95High": 236.77,
+        "median": 234.15,
+        "p95": 259.81,
+        "min": 204.82,
+        "max": 277.85
+      },
+      "invalidActionsTotal": 0,
+      "starvationEventsTotal": 1108
+    },
+    {
+      "policyKey": "PRIORITY",
+      "algorithm": "PRIORITY",
+      "label": "Priority",
+      "isTrainedModel": true,
+      "sampleCount": 120,
+      "waitingTime": {
+        "mean": 53.19,
+        "stdDev": 27.18,
+        "ci95Low": 48.28,
+        "ci95High": 58.1,
+        "median": 40.8,
+        "p95": 106.8,
+        "min": 17.6,
+        "max": 109.2
+      },
+      "turnaroundTime": {
+        "mean": 67.12,
+        "stdDev": 32.58,
+        "ci95Low": 61.23,
+        "ci95High": 73.01,
+        "median": 52.2,
+        "p95": 132.1,
+        "min": 26.3,
+        "max": 134.3
+      },
+      "cpuUtilisation": {
+        "mean": 99.83,
+        "stdDev": 0.5,
+        "ci95Low": 99.74,
+        "ci95High": 99.92,
+        "median": 100,
+        "p95": 100,
+        "min": 97.37,
+        "max": 100
+      },
+      "ramUtilisation": {
+        "mean": 64.74,
+        "stdDev": 12.03,
+        "ci95Low": 62.56,
+        "ci95High": 66.91,
+        "median": 68.46,
+        "p95": 80.16,
+        "min": 32.89,
+        "max": 84.33
+      },
+      "throughput": {
+        "mean": 8.15,
+        "stdDev": 2.59,
+        "ci95Low": 7.68,
+        "ci95High": 8.61,
+        "median": 8.4,
+        "p95": 12.05,
+        "min": 3.68,
+        "max": 12.82
+      },
+      "jainFairness": {
+        "mean": 0.5726,
+        "stdDev": 0.0939,
+        "ci95Low": 0.5556,
+        "ci95High": 0.5896,
+        "median": 0.5944,
+        "p95": 0.6957,
+        "min": 0.3081,
+        "max": 0.7497
+      },
+      "serviceShareFairness": {
+        "mean": 0.7902,
+        "stdDev": 0.0359,
+        "ci95Low": 0.7837,
+        "ci95High": 0.7967,
+        "median": 0.7968,
+        "p95": 0.8384,
+        "min": 0.6634,
+        "max": 0.8746
+      },
+      "episodeReward": {
+        "mean": 252.54,
+        "stdDev": 36.87,
+        "ci95Low": 245.87,
+        "ci95High": 259.2,
+        "median": 242.18,
+        "p95": 330.8,
+        "min": 199.48,
+        "max": 349.31
+      },
+      "invalidActionsTotal": 0,
+      "starvationEventsTotal": 863
+    },
+    {
+      "policyKey": "Q_LEARNING_TRAINED",
+      "algorithm": "Q_LEARNING",
+      "label": "Q-Learning (Trained)",
+      "isTrainedModel": true,
+      "sampleCount": 120,
+      "waitingTime": {
+        "mean": 73.25,
+        "stdDev": 45.79,
+        "ci95Low": 64.98,
+        "ci95High": 81.53,
+        "median": 51.85,
+        "p95": 161.56,
+        "min": 22.3,
+        "max": 187.5
+      },
+      "turnaroundTime": {
+        "mean": 87.19,
+        "stdDev": 51.28,
+        "ci95Low": 77.92,
+        "ci95High": 96.45,
+        "median": 64.15,
+        "p95": 186.61,
+        "min": 31,
+        "max": 214.7
+      },
+      "cpuUtilisation": {
+        "mean": 99.59,
+        "stdDev": 0.9,
+        "ci95Low": 99.43,
+        "ci95High": 99.76,
+        "median": 100,
+        "p95": 100,
+        "min": 95.68,
+        "max": 100
+      },
+      "ramUtilisation": {
+        "mean": 65.02,
+        "stdDev": 9.27,
+        "ci95Low": 63.34,
+        "ci95High": 66.69,
+        "median": 65.89,
+        "p95": 78.07,
+        "min": 42.47,
+        "max": 82.5
+      },
+      "throughput": {
+        "mean": 8.13,
+        "stdDev": 2.59,
+        "ci95Low": 7.66,
+        "ci95High": 8.6,
+        "median": 8.4,
+        "p95": 12.05,
+        "min": 3.68,
+        "max": 12.82
+      },
+      "jainFairness": {
+        "mean": 0.7493,
+        "stdDev": 0.1232,
+        "ci95Low": 0.727,
+        "ci95High": 0.7716,
+        "median": 0.7498,
+        "p95": 0.9377,
+        "min": 0.4637,
+        "max": 0.9655
+      },
+      "serviceShareFairness": {
+        "mean": 0.8358,
+        "stdDev": 0.0525,
+        "ci95Low": 0.8263,
+        "ci95High": 0.8452,
+        "median": 0.8378,
+        "p95": 0.9231,
+        "min": 0.7094,
+        "max": 0.9428
+      },
+      "episodeReward": {
+        "mean": 232.49,
+        "stdDev": 20.69,
+        "ci95Low": 228.75,
+        "ci95High": 236.23,
+        "median": 232.05,
+        "p95": 263.24,
+        "min": 182.47,
+        "max": 282.2
+      },
+      "invalidActionsTotal": 0,
+      "starvationEventsTotal": 1082
+    },
+    {
+      "policyKey": "DQN_TRAINED",
+      "algorithm": "DQN",
+      "label": "DQN (Trained)",
+      "isTrainedModel": true,
+      "sampleCount": 120,
+      "waitingTime": {
+        "mean": 56.17,
+        "stdDev": 29.28,
+        "ci95Low": 50.87,
+        "ci95High": 61.46,
+        "median": 42.95,
+        "p95": 114.03,
+        "min": 23.4,
+        "max": 122.4
+      },
+      "turnaroundTime": {
+        "mean": 70.1,
+        "stdDev": 34.72,
+        "ci95Low": 63.82,
+        "ci95High": 76.37,
+        "median": 53.7,
+        "p95": 138.37,
+        "min": 31.5,
+        "max": 148.7
+      },
+      "cpuUtilisation": {
+        "mean": 99.83,
+        "stdDev": 0.5,
+        "ci95Low": 99.74,
+        "ci95High": 99.92,
+        "median": 100,
+        "p95": 100,
+        "min": 97.37,
+        "max": 100
+      },
+      "ramUtilisation": {
+        "mean": 31.25,
+        "stdDev": 15.53,
+        "ci95Low": 28.45,
+        "ci95High": 34.06,
+        "median": 27.51,
+        "p95": 58.78,
+        "min": 6.31,
+        "max": 67.36
+      },
+      "throughput": {
+        "mean": 8.15,
+        "stdDev": 2.59,
+        "ci95Low": 7.68,
+        "ci95High": 8.61,
+        "median": 8.4,
+        "p95": 12.05,
+        "min": 3.68,
+        "max": 12.82
+      },
+      "jainFairness": {
+        "mean": 0.5726,
+        "stdDev": 0.0939,
+        "ci95Low": 0.5556,
+        "ci95High": 0.5895,
+        "median": 0.5784,
+        "p95": 0.7146,
+        "min": 0.2838,
+        "max": 0.7451
+      },
+      "serviceShareFairness": {
+        "mean": 0.7889,
+        "stdDev": 0.0272,
+        "ci95Low": 0.784,
+        "ci95High": 0.7938,
+        "median": 0.7912,
+        "p95": 0.8264,
+        "min": 0.6754,
+        "max": 0.8462
+      },
+      "episodeReward": {
+        "mean": 247.97,
+        "stdDev": 34.27,
+        "ci95Low": 241.77,
+        "ci95High": 254.16,
+        "median": 236.38,
+        "p95": 315.99,
+        "min": 196.73,
+        "max": 332.59
+      },
+      "invalidActionsTotal": 0,
+      "starvationEventsTotal": 877
+    },
+    {
+      "policyKey": "Q_LEARNING_UNTRAINED",
+      "algorithm": "Q_LEARNING",
+      "label": "Q-Learning (Untrained Ref)",
+      "isTrainedModel": false,
+      "sampleCount": 120,
+      "waitingTime": {
+        "mean": 71.51,
+        "stdDev": 46.55,
+        "ci95Low": 63.09,
+        "ci95High": 79.92,
+        "median": 48.85,
+        "p95": 160.36,
+        "min": 27.3,
+        "max": 185.5
+      },
+      "turnaroundTime": {
+        "mean": 85.44,
+        "stdDev": 52.02,
+        "ci95Low": 76.04,
+        "ci95High": 94.84,
+        "median": 60.7,
+        "p95": 184.62,
+        "min": 36,
+        "max": 212.7
+      },
+      "cpuUtilisation": {
+        "mean": 99.83,
+        "stdDev": 0.5,
+        "ci95Low": 99.74,
+        "ci95High": 99.92,
+        "median": 100,
+        "p95": 100,
+        "min": 97.37,
+        "max": 100
+      },
+      "ramUtilisation": {
+        "mean": 64.87,
+        "stdDev": 8.64,
+        "ci95Low": 63.31,
+        "ci95High": 66.43,
+        "median": 64.81,
+        "p95": 77.49,
+        "min": 40.31,
+        "max": 83.64
+      },
+      "throughput": {
+        "mean": 8.15,
+        "stdDev": 2.59,
+        "ci95Low": 7.68,
+        "ci95High": 8.61,
+        "median": 8.4,
+        "p95": 12.05,
+        "min": 3.68,
+        "max": 12.82
+      },
+      "jainFairness": {
+        "mean": 0.7731,
+        "stdDev": 0.1113,
+        "ci95Low": 0.753,
+        "ci95High": 0.7932,
+        "median": 0.7508,
+        "p95": 0.9479,
+        "min": 0.5113,
+        "max": 0.9744
+      },
+      "serviceShareFairness": {
+        "mean": 0.8549,
+        "stdDev": 0.042,
+        "ci95Low": 0.8473,
+        "ci95High": 0.8625,
+        "median": 0.8516,
+        "p95": 0.9364,
+        "min": 0.7621,
+        "max": 0.9723
+      },
+      "episodeReward": {
+        "mean": 236.17,
+        "stdDev": 19.15,
+        "ci95Low": 232.71,
+        "ci95High": 239.63,
+        "median": 235.77,
+        "p95": 266.99,
+        "min": 201.58,
+        "max": 296.06
+      },
+      "invalidActionsTotal": 0,
+      "starvationEventsTotal": 1043
+    },
+    {
+      "policyKey": "DQN_UNTRAINED",
+      "algorithm": "DQN",
+      "label": "DQN (Untrained Ref)",
+      "isTrainedModel": false,
+      "sampleCount": 120,
+      "waitingTime": {
+        "mean": 55.02,
+        "stdDev": 27.54,
+        "ci95Low": 50.04,
+        "ci95High": 60,
+        "median": 44,
+        "p95": 109.74,
+        "min": 23.9,
+        "max": 116.4
+      },
+      "turnaroundTime": {
+        "mean": 68.95,
+        "stdDev": 32.99,
+        "ci95Low": 62.99,
+        "ci95High": 74.91,
+        "median": 56.05,
+        "p95": 134.22,
+        "min": 31.7,
+        "max": 142.3
+      },
+      "cpuUtilisation": {
+        "mean": 99.83,
+        "stdDev": 0.5,
+        "ci95Low": 99.74,
+        "ci95High": 99.92,
+        "median": 100,
+        "p95": 100,
+        "min": 97.37,
+        "max": 100
+      },
+      "ramUtilisation": {
+        "mean": 30.51,
+        "stdDev": 14.22,
+        "ci95Low": 27.94,
+        "ci95High": 33.08,
+        "median": 32.46,
+        "p95": 53.19,
+        "min": 7.25,
+        "max": 57.74
+      },
+      "throughput": {
+        "mean": 8.15,
+        "stdDev": 2.59,
+        "ci95Low": 7.68,
+        "ci95High": 8.61,
+        "median": 8.4,
+        "p95": 12.05,
+        "min": 3.68,
+        "max": 12.82
+      },
+      "jainFairness": {
+        "mean": 0.58,
+        "stdDev": 0.0986,
+        "ci95Low": 0.5622,
+        "ci95High": 0.5979,
+        "median": 0.5908,
+        "p95": 0.7417,
+        "min": 0.324,
+        "max": 0.8047
+      },
+      "serviceShareFairness": {
+        "mean": 0.7886,
+        "stdDev": 0.033,
+        "ci95Low": 0.7826,
+        "ci95High": 0.7945,
+        "median": 0.793,
+        "p95": 0.8343,
+        "min": 0.6874,
+        "max": 0.8628
+      },
+      "episodeReward": {
+        "mean": 249.92,
+        "stdDev": 36.11,
+        "ci95Low": 243.39,
+        "ci95High": 256.44,
+        "median": 238.24,
+        "p95": 319.81,
+        "min": 193.02,
+        "max": 346.5
+      },
+      "invalidActionsTotal": 0,
+      "starvationEventsTotal": 905
+    }
+  ],
+  "workloadBreakdown": [
+    {
+      "workloadType": "CPU_INTENSIVE",
+      "isUnseenForPretrained": true,
+      "sampleSeeds": 30,
+      "byPolicy": {
+        "FCFS": {
+          "avgWaitMean": 97.11,
+          "avgWaitCi95Half": 4.39,
+          "throughputMean": 4.39,
+          "jainFairnessMean": 0.6743,
+          "rewardMean": 308.4
+        },
+        "RR": {
+          "avgWaitMean": 161.1,
+          "avgWaitCi95Half": 7.2,
+          "throughputMean": 4.39,
+          "jainFairnessMean": 0.9818,
+          "rewardMean": 234.1
+        },
+        "PRIORITY": {
+          "avgWaitMean": 96.27,
+          "avgWaitCi95Half": 3.78,
+          "throughputMean": 4.39,
+          "jainFairnessMean": 0.6458,
+          "rewardMean": 306.59
+        },
+        "Q_LEARNING_TRAINED": {
+          "avgWaitMean": 148,
+          "avgWaitCi95Half": 7.07,
+          "throughputMean": 4.38,
+          "jainFairnessMean": 0.9029,
+          "rewardMean": 249.73
+        },
+        "DQN_TRAINED": {
+          "avgWaitMean": 103.37,
+          "avgWaitCi95Half": 5,
+          "throughputMean": 4.39,
+          "jainFairnessMean": 0.6685,
+          "rewardMean": 298.14
+        },
+        "Q_LEARNING_UNTRAINED": {
+          "avgWaitMean": 149.23,
+          "avgWaitCi95Half": 5.72,
+          "throughputMean": 4.39,
+          "jainFairnessMean": 0.9178,
+          "rewardMean": 248.96
+        },
+        "DQN_UNTRAINED": {
+          "avgWaitMean": 99.23,
+          "avgWaitCi95Half": 4.35,
+          "throughputMean": 4.39,
+          "jainFairnessMean": 0.6697,
+          "rewardMean": 305.22
+        }
+      }
+    },
+    {
+      "workloadType": "MEMORY_INTENSIVE",
+      "isUnseenForPretrained": true,
+      "sampleSeeds": 30,
+      "byPolicy": {
+        "FCFS": {
+          "avgWaitMean": 33.94,
+          "avgWaitCi95Half": 1.81,
+          "throughputMean": 11.22,
+          "jainFairnessMean": 0.6951,
+          "rewardMean": 224.22
+        },
+        "RR": {
+          "avgWaitMean": 38.76,
+          "avgWaitCi95Half": 2.1,
+          "throughputMean": 11.22,
+          "jainFairnessMean": 0.7672,
+          "rewardMean": 220
+        },
+        "PRIORITY": {
+          "avgWaitMean": 34.28,
+          "avgWaitCi95Half": 1.68,
+          "throughputMean": 11.22,
+          "jainFairnessMean": 0.5973,
+          "rewardMean": 220.93
+        },
+        "Q_LEARNING_TRAINED": {
+          "avgWaitMean": 39.95,
+          "avgWaitCi95Half": 2.07,
+          "throughputMean": 11.22,
+          "jainFairnessMean": 0.6973,
+          "rewardMean": 216.25
+        },
+        "DQN_TRAINED": {
+          "avgWaitMean": 36.96,
+          "avgWaitCi95Half": 2.04,
+          "throughputMean": 11.22,
+          "jainFairnessMean": 0.6115,
+          "rewardMean": 217.04
+        },
+        "Q_LEARNING_UNTRAINED": {
+          "avgWaitMean": 38.94,
+          "avgWaitCi95Half": 1.98,
+          "throughputMean": 11.22,
+          "jainFairnessMean": 0.7115,
+          "rewardMean": 218.32
+        },
+        "DQN_UNTRAINED": {
+          "avgWaitMean": 34.7,
+          "avgWaitCi95Half": 2.05,
+          "throughputMean": 11.22,
+          "jainFairnessMean": 0.6076,
+          "rewardMean": 220.4
+        }
+      }
+    },
+    {
+      "workloadType": "MIXED",
+      "isUnseenForPretrained": false,
+      "sampleSeeds": 30,
+      "byPolicy": {
+        "FCFS": {
+          "avgWaitMean": 51.46,
+          "avgWaitCi95Half": 2.5,
+          "throughputMean": 8.01,
+          "jainFairnessMean": 0.551,
+          "rewardMean": 234.83
+        },
+        "RR": {
+          "avgWaitMean": 57.93,
+          "avgWaitCi95Half": 3.04,
+          "throughputMean": 8.01,
+          "jainFairnessMean": 0.8314,
+          "rewardMean": 237.68
+        },
+        "PRIORITY": {
+          "avgWaitMean": 49.75,
+          "avgWaitCi95Half": 4.13,
+          "throughputMean": 8.01,
+          "jainFairnessMean": 0.5205,
+          "rewardMean": 235.33
+        },
+        "Q_LEARNING_TRAINED": {
+          "avgWaitMean": 62.03,
+          "avgWaitCi95Half": 4.25,
+          "throughputMean": 7.96,
+          "jainFairnessMean": 0.6462,
+          "rewardMean": 222.81
+        },
+        "DQN_TRAINED": {
+          "avgWaitMean": 50.08,
+          "avgWaitCi95Half": 2.74,
+          "throughputMean": 8.01,
+          "jainFairnessMean": 0.5061,
+          "rewardMean": 234.63
+        },
+        "Q_LEARNING_UNTRAINED": {
+          "avgWaitMean": 54.83,
+          "avgWaitCi95Half": 3.32,
+          "throughputMean": 8.01,
+          "jainFairnessMean": 0.7301,
+          "rewardMean": 237.07
+        },
+        "DQN_UNTRAINED": {
+          "avgWaitMean": 49.37,
+          "avgWaitCi95Half": 3.12,
+          "throughputMean": 8.01,
+          "jainFairnessMean": 0.5026,
+          "rewardMean": 233.7
+        }
+      }
+    },
+    {
+      "workloadType": "DYNAMIC",
+      "isUnseenForPretrained": true,
+      "sampleSeeds": 30,
+      "byPolicy": {
+        "FCFS": {
+          "avgWaitMean": 32.15,
+          "avgWaitCi95Half": 2.09,
+          "throughputMean": 8.96,
+          "jainFairnessMean": 0.6149,
+          "rewardMean": 252.76
+        },
+        "RR": {
+          "avgWaitMean": 43.6,
+          "avgWaitCi95Half": 3.24,
+          "throughputMean": 8.96,
+          "jainFairnessMean": 0.8075,
+          "rewardMean": 244.1
+        },
+        "PRIORITY": {
+          "avgWaitMean": 32.46,
+          "avgWaitCi95Half": 2.38,
+          "throughputMean": 8.96,
+          "jainFairnessMean": 0.5268,
+          "rewardMean": 247.3
+        },
+        "Q_LEARNING_TRAINED": {
+          "avgWaitMean": 43.04,
+          "avgWaitCi95Half": 3.42,
+          "throughputMean": 8.95,
+          "jainFairnessMean": 0.7508,
+          "rewardMean": 241.17
+        },
+        "DQN_TRAINED": {
+          "avgWaitMean": 34.26,
+          "avgWaitCi95Half": 2.22,
+          "throughputMean": 8.96,
+          "jainFairnessMean": 0.5041,
+          "rewardMean": 242.06
+        },
+        "Q_LEARNING_UNTRAINED": {
+          "avgWaitMean": 43.04,
+          "avgWaitCi95Half": 3.29,
+          "throughputMean": 8.96,
+          "jainFairnessMean": 0.733,
+          "rewardMean": 240.34
+        },
+        "DQN_UNTRAINED": {
+          "avgWaitMean": 36.76,
+          "avgWaitCi95Half": 2.63,
+          "throughputMean": 8.96,
+          "jainFairnessMean": 0.5402,
+          "rewardMean": 240.35
+        }
+      }
+    }
+  ],
+  "ablationStudy": [
+    {
+      "variantId": "q-full",
+      "label": "Q-Learning Full (Adaptive q∈{1,2,4})",
+      "description": "Full trained Q-Learning agent with adaptive quantum selection under Balanced reward.",
+      "algorithm": "Q_LEARNING",
+      "avgWaitMean": 56.62,
+      "avgWaitStd": 9.97,
+      "throughputMean": 8.08,
+      "jainFairnessMean": 0.6979,
+      "rewardMean": 231.79,
+      "deltaRewardVsBaseline": 0
+    },
+    {
+      "variantId": "q-fixed-q1",
+      "label": "Ablation: Q-Learning Fixed q=1",
+      "description": "Restricts trained Q-Learning to quantum=1 only (removes multi-tick SMDP flexibility).",
+      "algorithm": "Q_LEARNING",
+      "avgWaitMean": 56.36,
+      "avgWaitStd": 8.24,
+      "throughputMean": 8.07,
+      "jainFairnessMean": 0.7677,
+      "rewardMean": 235.25,
+      "deltaRewardVsBaseline": 3.46
+    },
+    {
+      "variantId": "q-fixed-q4",
+      "label": "Ablation: Q-Learning Fixed q=4",
+      "description": "Restricts trained Q-Learning to quantum=4 only (coarser preemption granularity).",
+      "algorithm": "Q_LEARNING",
+      "avgWaitMean": 55.85,
+      "avgWaitStd": 7.26,
+      "throughputMean": 8.1,
+      "jainFairnessMean": 0.6137,
+      "rewardMean": 228.8,
+      "deltaRewardVsBaseline": -2.99
+    },
+    {
+      "variantId": "q-fairness-eval",
+      "label": "Reward Eval: Fairness-Focused Objective",
+      "description": "Evaluates identical trained Q-Learning policy under Fairness-Focused reward weights.",
+      "algorithm": "Q_LEARNING",
+      "avgWaitMean": 58.74,
+      "avgWaitStd": 9.8,
+      "throughputMean": 8.09,
+      "jainFairnessMean": 0.677,
+      "rewardMean": 185.13,
+      "deltaRewardVsBaseline": -46.66
+    },
+    {
+      "variantId": "dqn-full",
+      "label": "DQN Full (Adaptive q∈{1,2,4})",
+      "description": "Full trained TensorFlow.js DQN with adaptive quantum selection.",
+      "algorithm": "DQN",
+      "avgWaitMean": 49.65,
+      "avgWaitStd": 6.82,
+      "throughputMean": 8.19,
+      "jainFairnessMean": 0.4913,
+      "rewardMean": 233.1,
+      "deltaRewardVsBaseline": 0
+    },
+    {
+      "variantId": "dqn-fixed-q1",
+      "label": "Ablation: DQN Fixed q=1",
+      "description": "Restricts trained DQN to quantum=1 only.",
+      "algorithm": "DQN",
+      "avgWaitMean": 50.53,
+      "avgWaitStd": 6.54,
+      "throughputMean": 8.19,
+      "jainFairnessMean": 0.4774,
+      "rewardMean": 231.73,
+      "deltaRewardVsBaseline": -1.37
+    }
+  ],
+  "empiricalFindings": [
+    "Lowest mean waiting time across 30 seeds × 4 workload(s): Priority at 53.19t (95% CI [48.28, 58.1], P95=106.8t).",
+    "Highest mean episode reward: FCFS at 255.05 (SD=35.89).",
+    "Highest service-share fairness index: Round Robin (q=2) at 0.9182 (Jain wait fairness 0.847).",
+    "Trained vs. untrained Q-Learning reward delta: -3.68 (mean wait 73.25t vs. 71.51t).",
+    "Trained vs. untrained DQN reward delta: -1.95 (mean wait 56.17t vs. 55.02t)."
+  ]
+}

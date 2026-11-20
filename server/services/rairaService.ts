@@ -22,7 +22,21 @@ import {
   getPretrainedDQNModel,
   getPretrainedQLearningModel,
 } from '../../src/reinforcement-learning/pretrainedModels.ts';
+import {
+  executeExplainedDQNStep,
+  executeExplainedQLearningStep,
+} from '../../src/reinforcement-learning/ExplainableAI.ts';
+import { runCounterfactualAnalysis } from '../../src/simulation/CounterfactualLab.ts';
+import { runShockArenaExperiment } from '../../src/simulation/ShockArena.ts';
+import { runStatisticalValidation } from '../../src/analytics/StatisticalValidation.ts';
 import type { BaselineAlgorithm } from '../../src/simulation/CpuScheduler.ts';
+import type {
+  CounterfactualReport,
+  ShockArenaReport,
+  ShockScenarioConfig,
+  StatisticalValidationConfig,
+  StatisticalValidationReport,
+} from '../../src/types/intelligence.ts';
 
 export class RairaBackendService {
   readonly simulation: SimulationEngine;
@@ -33,6 +47,9 @@ export class RairaBackendService {
   private simInterval: ReturnType<typeof setInterval> | null = null;
   private stepIntervalMs: number = 350;
   private lastComparison: SeedComparisonBatch | null = null;
+  private lastCounterfactual: CounterfactualReport | null = null;
+  private lastShockReport: ShockArenaReport | null = null;
+  private lastValidationReport: StatisticalValidationReport | null = null;
   private readyPromise: Promise<void>;
 
   constructor() {
@@ -83,6 +100,18 @@ export class RairaBackendService {
 
   getLastComparison(): SeedComparisonBatch | null {
     return this.lastComparison;
+  }
+
+  getLastCounterfactual(): CounterfactualReport | null {
+    return this.lastCounterfactual;
+  }
+
+  getLastShockReport(): ShockArenaReport | null {
+    return this.lastShockReport;
+  }
+
+  getLastValidationReport(): StatisticalValidationReport | null {
+    return this.lastValidationReport;
   }
 
   loadWorkload(params: {
@@ -150,6 +179,7 @@ export class RairaBackendService {
     rrQuantum?: number;
     stepIntervalMs?: number;
     rewardWeights?: Partial<RewardWeights>;
+    starvationThreshold?: number;
   }): SimulationSnapshot {
     if (params.algorithm) {
       this.simulation.setAlgorithm(params.algorithm);
@@ -159,6 +189,9 @@ export class RairaBackendService {
     }
     if (params.rewardWeights) {
       this.simulation.setRewardWeights(params.rewardWeights);
+    }
+    if (params.starvationThreshold !== undefined) {
+      this.simulation.setStarvationThreshold(params.starvationThreshold);
     }
     if (params.stepIntervalMs !== undefined) {
       this.stepIntervalMs = Math.max(80, Math.min(2000, Math.floor(params.stepIntervalMs)));
@@ -184,18 +217,11 @@ export class RairaBackendService {
     if (alg === 'FCFS' || alg === 'RR' || alg === 'PRIORITY') {
       this.simulation.stepBaselineTick(alg, true);
     } else if (alg === 'Q_LEARNING') {
-      const mask = this.simulation.getActionMask();
-      const prevBusy = this.simulation.getMetrics().currentCpuUtilisation > 0;
-      const chosen = this.qAgent.selectAction({
-        processes: this.simulation.getProcesses(),
-        currentTick: this.simulation.getCurrentTick(),
-        availableRamMb: this.simulation.resourceManager.getAvailableRamMb(),
-        totalRamMb: this.simulation.resourceManager.totalRamMb,
-        prevTickCpuBusy: prevBusy,
-        actionMask: mask,
-        explore: false,
+      executeExplainedQLearningStep({
+        engine: this.simulation,
+        qAgent: this.qAgent,
+        recordLogs: true,
       });
-      this.simulation.stepAction(chosen.actionId, true);
     } else if (alg === 'DQN') {
       await this.ensureReady();
       const dep = await this.dqnAgent.initialize();
@@ -203,10 +229,11 @@ export class RairaBackendService {
         this.stopAutoLoop();
         throw new Error(dep.error ?? 'TensorFlow.js DQN is unavailable.');
       }
-      const obs = this.simulation.getObservation();
-      const mask = this.simulation.getActionMask();
-      const actionId = this.dqnAgent.selectAction(obs, mask, false);
-      this.simulation.stepAction(actionId, true);
+      executeExplainedDQNStep({
+        engine: this.simulation,
+        dqnAgent: this.dqnAgent,
+        recordLogs: true,
+      });
     }
 
     if (this.simulation.isDone()) {
@@ -577,6 +604,56 @@ export class RairaBackendService {
 
     this.lastComparison = batch;
     return batch;
+  }
+
+  // ---- RAIRA 2.0 Research Intelligence Capabilities ----
+
+  async runCounterfactual(params: {
+    horizonTicks: number | 'FULL_EPISODE';
+    rlReferenceAgent?: 'Q_LEARNING' | 'DQN';
+    alternativeActionId?: number | null;
+  }): Promise<CounterfactualReport> {
+    await this.ensureReady();
+    await this.dqnAgent.initialize();
+    if (this.simulation.getStatus() === 'RUNNING') {
+      this.pauseSimulation();
+    }
+    const report = runCounterfactualAnalysis({
+      sourceEngine: this.simulation,
+      qAgent: this.qAgent,
+      dqnAgent: this.dqnAgent,
+      rlReferenceAgent: params.rlReferenceAgent,
+      horizonTicks: params.horizonTicks,
+      alternativeActionId: params.alternativeActionId,
+    });
+    this.lastCounterfactual = report;
+    return report;
+  }
+
+  async runShockArena(config: ShockScenarioConfig): Promise<ShockArenaReport> {
+    await this.ensureReady();
+    const report = await runShockArenaExperiment({
+      config,
+      qAgent: this.qAgent,
+      dqnAgent: this.dqnAgent,
+      rewardWeights: this.simulation.getRewardWeights(),
+    });
+    this.lastShockReport = report;
+    return report;
+  }
+
+  async runStatisticalValidationSuite(
+    config: StatisticalValidationConfig
+  ): Promise<StatisticalValidationReport> {
+    await this.ensureReady();
+    const report = await runStatisticalValidation({
+      config,
+      trainedQAgent: this.qAgent,
+      trainedDqnAgent: this.dqnAgent,
+      rewardWeights: this.simulation.getRewardWeights(),
+    });
+    this.lastValidationReport = report;
+    return report;
   }
 }
 

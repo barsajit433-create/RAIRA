@@ -5,6 +5,7 @@ import type {
   TrainingEpisodeMetric,
   TrainingSessionSnapshot,
 } from './types/reinforcementLearning';
+import type { StatisticalValidationReport } from './types/intelligence';
 import { rairaApi } from './services/api';
 import { experimentStorage } from './services/experimentStorage';
 import { Sidebar, type NavPageId } from './components/Sidebar';
@@ -13,15 +14,23 @@ import { Dashboard } from './pages/Dashboard';
 import { ProcessManager } from './pages/ProcessManager';
 import { LiveSimulation } from './pages/LiveSimulation';
 import { TrainingCentre } from './pages/TrainingCentre';
+import { IntelligenceLab } from './pages/IntelligenceLab';
+import { ShockArena } from './pages/ShockArena';
+import { FairnessMonitorPage } from './pages/FairnessMonitorPage';
 import { AlgorithmComparison } from './pages/AlgorithmComparison';
 import { ResearchAnalytics } from './pages/ResearchAnalytics';
 import { ExperimentHistory } from './pages/ExperimentHistory';
 import { ProjectInformation } from './pages/ProjectInformation';
+import { DesignStudio } from './pages/DesignStudio';
+import { useTheme } from './theme/ThemeContext';
 
 export default function App() {
+  const { settings, updateSettings } = useTheme();
   const [activePage, setActivePage] = useState<NavPageId>('overview');
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const sidebarCollapsed = settings.sidebarCollapsed;
+  const toggleSidebarCollapsed = () =>
+    updateSettings({ sidebarCollapsed: !settings.sidebarCollapsed });
 
   const [simulation, setSimulation] = useState<SimulationSnapshot | null>(null);
   const [training, setTraining] = useState<TrainingSessionSnapshot | null>(null);
@@ -31,6 +40,11 @@ export default function App() {
     const saved = experimentStorage.loadComparisons();
     return saved.length > 0 ? saved[0] : null;
   });
+  const [latestValidationReport, setLatestValidationReport] =
+    useState<StatisticalValidationReport | null>(() => {
+      const saved = experimentStorage.loadValidationReports();
+      return saved.length > 0 ? saved[0] : null;
+    });
   const [experiments, setExperiments] = useState<ExperimentRecord[]>(() =>
     experimentStorage.loadHistory()
   );
@@ -86,6 +100,8 @@ export default function App() {
       throughput: snap.metrics.throughput,
       jainFairness: snap.metrics.jainFairnessIndex,
       reward: snap.metrics.totalEpisodeReward,
+      rewardPreset: snap.fairnessMonitor?.activeRewardPreset ?? 'BALANCED',
+      rewardWeights: { ...snap.rewardWeights },
       notes: note ?? `Live simulation run (${snap.status} at tick ${snap.currentTick})`,
     };
     setExperiments(experimentStorage.addHistoryRecord(record));
@@ -365,13 +381,18 @@ export default function App() {
     }
   };
 
+  const handleValidationComplete = (report: StatisticalValidationReport) => {
+    setLatestValidationReport(report);
+    experimentStorage.saveValidationReport(report);
+  };
+
   return (
-    <div className="min-h-screen flex bg-[#060B14] text-slate-100">
+    <div className="min-h-screen flex text-[var(--text-primary)]">
       <Sidebar
         activePage={activePage}
         onNavigate={setActivePage}
         collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed((v) => !v)}
+        onToggleCollapse={toggleSidebarCollapsed}
         mobileOpen={mobileMenuOpen}
         onCloseMobile={() => setMobileMenuOpen(false)}
       />
@@ -382,20 +403,32 @@ export default function App() {
           simulation={simulation}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
           onLaunchDemo={handleLaunchDemo}
+          onNavigate={setActivePage}
           demoLoading={busy}
         />
 
-        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-6 max-w-[1600px] w-full mx-auto">
+        <main
+          className={`flex-1 max-w-[1600px] w-full mx-auto ${
+            settings.layoutDensity === 'compact'
+              ? 'px-3 sm:px-5 lg:px-6 py-4'
+              : 'px-4 sm:px-6 lg:px-8 py-6'
+          }`}
+        >
           {globalError && (
             <div
               role="alert"
-              className="mb-5 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3 text-xs text-red-300 flex items-center justify-between gap-3"
+              className="mb-5 rounded-lg border px-4 py-3 text-xs flex items-center justify-between gap-3"
+              style={{
+                borderColor: 'var(--status-danger)',
+                backgroundColor: 'var(--status-danger-soft)',
+                color: 'var(--status-danger)',
+              }}
             >
               <span>{globalError}</span>
               <button
                 type="button"
                 onClick={() => setGlobalError(null)}
-                className="text-red-200 hover:text-white underline cursor-pointer shrink-0"
+                className="font-semibold underline cursor-pointer shrink-0"
               >
                 Dismiss
               </button>
@@ -444,6 +477,29 @@ export default function App() {
                 if (simulation) recordSimulationToHistory(simulation, 'Manually logged run');
               }}
               onLaunchDemo={handleLaunchDemo}
+              onNavigate={setActivePage}
+            />
+          )}
+
+          {activePage === 'intelligence' && (
+            <IntelligenceLab
+              simulation={simulation}
+              busy={busy}
+              onLaunchDemo={handleLaunchDemo}
+              onStep={handleStep}
+              onPause={handlePause}
+              onReset={handleReset}
+              onChangeAlgorithm={handleChangeAlgorithm}
+            />
+          )}
+
+          {activePage === 'shock-arena' && <ShockArena />}
+
+          {activePage === 'fairness' && (
+            <FairnessMonitorPage
+              simulation={simulation}
+              onSimulationUpdated={setSimulation}
+              onLaunchDemo={handleLaunchDemo}
             />
           )}
 
@@ -460,6 +516,8 @@ export default function App() {
               latestComparison={latestComparison}
               training={training}
               onComparisonComplete={handleComparisonComplete}
+              latestValidationReport={latestValidationReport}
+              onValidationComplete={handleValidationComplete}
             />
           )}
 
@@ -471,6 +529,8 @@ export default function App() {
               dqnHistory={dqnHistory}
               latestComparison={latestComparison}
               experiments={experiments}
+              latestValidationReport={latestValidationReport}
+              onValidationComplete={handleValidationComplete}
             />
           )}
 
@@ -483,6 +543,14 @@ export default function App() {
           )}
 
           {activePage === 'project-info' && <ProjectInformation />}
+
+          {activePage === 'design-studio' && (
+            <DesignStudio
+              simulation={simulation}
+              busy={busy}
+              onLaunchDemo={handleLaunchDemo}
+            />
+          )}
         </main>
       </div>
     </div>

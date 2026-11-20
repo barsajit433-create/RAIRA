@@ -28,6 +28,7 @@ import { rairaApi } from '../services/api';
 import { experimentStorage } from '../services/experimentStorage';
 import { exportService } from '../services/exportService';
 import { MetricCard } from '../components/MetricCard';
+import { useTheme } from '../theme/ThemeContext';
 
 interface TrainingCentreProps {
   training: TrainingSessionSnapshot | null;
@@ -40,6 +41,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
   onTrainingUpdated,
   onTrainingCompletedLog,
 }) => {
+  const { chartTheme } = useTheme();
   const [agentType, setAgentType] = useState<RLAgentType>('Q_LEARNING');
   const [workloadType, setWorkloadType] = useState<Exclude<WorkloadType, 'CUSTOM'>>('MIXED');
   const [numProcesses, setNumProcesses] = useState(8);
@@ -75,7 +77,10 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
       : 0;
 
   const activeHistory =
-    training && training.state === 'TRAINING' && training.config?.agentType === agentType && training.history.length > 0
+    training &&
+    training.state === 'TRAINING' &&
+    training.config?.agentType === agentType &&
+    training.history.length > 0
       ? training.history
       : agentType === 'DQN'
         ? (training?.dqnHistory ?? [])
@@ -244,16 +249,21 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="raira-section-stack">
       {/* DQN Dependency Error / Status Callout */}
       {agentType === 'DQN' && dqnStatus && !dqnStatus.available && (
         <div
           role="alert"
-          className="rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-xs text-red-200 space-y-1"
+          className="rounded-xl border p-4 text-xs space-y-1"
+          style={{
+            borderColor: 'var(--status-danger)',
+            backgroundColor: 'var(--status-danger-soft)',
+            color: 'var(--status-danger)',
+          }}
         >
-          <div className="font-semibold text-red-300">DQN TensorFlow.js Dependency Error</div>
+          <div className="font-semibold">DQN TensorFlow.js Dependency Error</div>
           <p>{dqnStatus.error}</p>
-          <p className="text-red-300/80">
+          <p className="opacity-85">
             RAIRA does not substitute random actions when TensorFlow.js fails to initialize. Switch
             to Tabular Q-Learning or resolve the backend dependency.
           </p>
@@ -263,11 +273,20 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
       {feedback && (
         <div
           role={feedback.tone === 'err' ? 'alert' : 'status'}
-          className={`rounded-lg border px-4 py-3 text-xs ${
+          className="rounded-lg border px-4 py-3 text-xs"
+          style={
             feedback.tone === 'err'
-              ? 'border-red-500/40 bg-red-500/10 text-red-300'
-              : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300'
-          }`}
+              ? {
+                  borderColor: 'var(--status-danger)',
+                  backgroundColor: 'var(--status-danger-soft)',
+                  color: 'var(--status-danger)',
+                }
+              : {
+                  borderColor: 'var(--status-success)',
+                  backgroundColor: 'var(--status-success-soft)',
+                  color: 'var(--status-success)',
+                }
+          }
         >
           {feedback.text}
         </div>
@@ -290,7 +309,8 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
           tone={
             training?.state === 'TRAINING'
               ? 'cyan'
-              : training?.state === 'COMPLETED' || (training?.state === 'IDLE' && agentSummary?.isTrained)
+              : training?.state === 'COMPLETED' ||
+                  (training?.state === 'IDLE' && agentSummary?.isTrained)
                 ? 'emerald'
                 : training?.state === 'ERROR'
                   ? 'red'
@@ -345,10 +365,11 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
           label={agentType === 'DQN' ? 'DQN Huber Loss' : 'Q-Table States'}
           value={
             agentType === 'DQN'
-              ? training?.dqnSummary.lastLoss !== null && training?.dqnSummary.lastLoss !== undefined
+              ? training?.dqnSummary.lastLoss !== null &&
+                training?.dqnSummary.lastLoss !== undefined
                 ? training.dqnSummary.lastLoss.toFixed(4)
                 : '—'
-              : training?.qLearningSummary.qTableStates ?? 0
+              : (training?.qLearningSummary.qTableStates ?? 0)
           }
           detail={
             agentType === 'DQN'
@@ -360,12 +381,12 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* Left Config & Controls Panel */}
-        <section className="xl:col-span-4 rounded-xl border border-slate-800/80 bg-[#0B1221] p-5 space-y-4">
+        <section className="xl:col-span-4 raira-card raira-card-pad space-y-4">
           <div>
-            <h2 className="font-display text-base font-semibold text-slate-100">
+            <h2 className="font-display text-base font-semibold text-[var(--text-primary)]">
               Agent &amp; Hyperparameters
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[var(--text-muted)]">
               Semi-Markov discounting (γ^τ) with strict valid-action masking
             </p>
           </div>
@@ -374,18 +395,26 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
           <div
             role="group"
             aria-label="Select RL agent type"
-            className="grid grid-cols-2 gap-1.5 p-1 rounded-lg bg-[#080F1D] border border-slate-800"
+            className="grid grid-cols-2 gap-1.5 p-1 rounded-lg raira-subtle"
           >
             <button
               type="button"
               disabled={isRunning}
               onClick={() => handleSwitchAgent('Q_LEARNING')}
               aria-pressed={agentType === 'Q_LEARNING'}
-              className={`py-2 px-3 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+              className={`py-2 px-3 rounded-md text-xs font-semibold transition-colors cursor-pointer border ${
                 agentType === 'Q_LEARNING'
-                  ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/40'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'text-[var(--accent-text)]'
+                  : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
+              style={
+                agentType === 'Q_LEARNING'
+                  ? {
+                      backgroundColor: 'var(--accent-soft)',
+                      borderColor: 'var(--accent-border)',
+                    }
+                  : undefined
+              }
             >
               Tabular Q-Learning
             </button>
@@ -394,23 +423,33 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
               disabled={isRunning}
               onClick={() => handleSwitchAgent('DQN')}
               aria-pressed={agentType === 'DQN'}
-              className={`py-2 px-3 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
+              className={`py-2 px-3 rounded-md text-xs font-semibold transition-colors cursor-pointer border ${
                 agentType === 'DQN'
-                  ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/40'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'text-[var(--accent-text)]'
+                  : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text-primary)]'
               }`}
+              style={
+                agentType === 'DQN'
+                  ? {
+                      backgroundColor: 'var(--accent-soft)',
+                      borderColor: 'var(--accent-border)',
+                    }
+                  : undefined
+              }
             >
               Deep Q-Network (DQN)
             </button>
           </div>
 
           {agentType === 'DQN' && dqnStatus?.available && (
-            <div className="rounded-lg border border-slate-800 bg-[#080F1D] px-3 py-2.5 text-[11px] font-mono text-slate-300 space-y-1">
-              <div>TF.js v{dqnStatus.version} · Backend: {dqnStatus.backend}</div>
-              <div className="text-slate-400">
+            <div className="raira-subtle rounded-lg px-3 py-2.5 text-[11px] font-mono text-[var(--text-secondary)] space-y-1">
+              <div>
+                TF.js v{dqnStatus.version} · Backend: {dqnStatus.backend}
+              </div>
+              <div className="text-[var(--text-muted)]">
                 Network: 262 → 256 (ReLU) → 128 (ReLU) → 97 Q-values
               </div>
-              <div className="text-slate-500">
+              <div className="text-[var(--text-muted)] opacity-85">
                 Adam · Huber Loss · Grad Clip 1.0 · Target Sync
               </div>
             </div>
@@ -418,7 +457,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
 
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="col-span-2">
-              <label htmlFor="rl-workload" className="block text-slate-400 mb-1">
+              <label htmlFor="rl-workload" className="block text-[var(--text-muted)] mb-1">
                 Training Workload Scenario
               </label>
               <select
@@ -426,7 +465,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                 value={workloadType}
                 disabled={isRunning}
                 onChange={(e) => setWorkloadType(e.target.value as Exclude<WorkloadType, 'CUSTOM'>)}
-                className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-2 text-xs text-slate-100 focus:border-cyan-500 focus:outline-none"
+                className="raira-input w-full rounded-lg px-3 py-2 text-xs"
               >
                 <option value="CPU_INTENSIVE">CPU-Intensive</option>
                 <option value="MEMORY_INTENSIVE">Memory-Intensive</option>
@@ -436,7 +475,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
             </div>
 
             <div>
-              <label htmlFor="rl-episodes" className="block text-slate-400 mb-1">
+              <label htmlFor="rl-episodes" className="block text-[var(--text-muted)] mb-1">
                 Episodes (1–500)
               </label>
               <input
@@ -447,12 +486,12 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                 disabled={isRunning}
                 value={episodes}
                 onChange={(e) => setEpisodes(Math.max(1, Math.min(500, Number(e.target.value) || 1)))}
-                className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-1.5 font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                className="raira-input w-full rounded-lg px-3 py-1.5 font-mono"
               />
             </div>
 
             <div>
-              <label htmlFor="rl-procs" className="block text-slate-400 mb-1">
+              <label htmlFor="rl-procs" className="block text-[var(--text-muted)] mb-1">
                 Processes / Episode
               </label>
               <input
@@ -465,12 +504,12 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                 onChange={(e) =>
                   setNumProcesses(Math.max(1, Math.min(32, Number(e.target.value) || 1)))
                 }
-                className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-1.5 font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                className="raira-input w-full rounded-lg px-3 py-1.5 font-mono"
               />
             </div>
 
             <div>
-              <label htmlFor="rl-lr" className="block text-slate-400 mb-1">
+              <label htmlFor="rl-lr" className="block text-[var(--text-muted)] mb-1">
                 Learning Rate (α)
               </label>
               <input
@@ -482,12 +521,12 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                 disabled={isRunning}
                 value={learningRate}
                 onChange={(e) => setLearningRate(Number(e.target.value) || 0.001)}
-                className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-1.5 font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                className="raira-input w-full rounded-lg px-3 py-1.5 font-mono"
               />
             </div>
 
             <div>
-              <label htmlFor="rl-gamma" className="block text-slate-400 mb-1">
+              <label htmlFor="rl-gamma" className="block text-[var(--text-muted)] mb-1">
                 Discount Factor (γ)
               </label>
               <input
@@ -499,12 +538,12 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                 disabled={isRunning}
                 value={discountFactor}
                 onChange={(e) => setDiscountFactor(Number(e.target.value) || 0.95)}
-                className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-1.5 font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                className="raira-input w-full rounded-lg px-3 py-1.5 font-mono"
               />
             </div>
 
             <div>
-              <label htmlFor="rl-eps" className="block text-slate-400 mb-1">
+              <label htmlFor="rl-eps" className="block text-[var(--text-muted)] mb-1">
                 Exploration Rate (ε)
               </label>
               <input
@@ -516,12 +555,12 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                 disabled={isRunning}
                 value={epsilonStart}
                 onChange={(e) => setEpsilonStart(Number(e.target.value) || 1.0)}
-                className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-1.5 font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                className="raira-input w-full rounded-lg px-3 py-1.5 font-mono"
               />
             </div>
 
             <div>
-              <label htmlFor="rl-decay" className="block text-slate-400 mb-1">
+              <label htmlFor="rl-decay" className="block text-[var(--text-muted)] mb-1">
                 Epsilon Decay
               </label>
               <input
@@ -533,12 +572,12 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                 disabled={isRunning}
                 value={epsilonDecay}
                 onChange={(e) => setEpsilonDecay(Number(e.target.value) || 0.95)}
-                className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-1.5 font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                className="raira-input w-full rounded-lg px-3 py-1.5 font-mono"
               />
             </div>
 
             <div>
-              <label htmlFor="rl-seed" className="block text-slate-400 mb-1">
+              <label htmlFor="rl-seed" className="block text-[var(--text-muted)] mb-1">
                 Random Seed
               </label>
               <input
@@ -547,13 +586,13 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                 disabled={isRunning}
                 value={seed}
                 onChange={(e) => setSeed(Number(e.target.value) || 42)}
-                className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-1.5 font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                className="raira-input w-full rounded-lg px-3 py-1.5 font-mono"
               />
             </div>
 
             {agentType === 'DQN' ? (
               <div>
-                <label htmlFor="rl-batch" className="block text-slate-400 mb-1">
+                <label htmlFor="rl-batch" className="block text-[var(--text-muted)] mb-1">
                   DQN Batch Size
                 </label>
                 <input
@@ -566,12 +605,12 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                   onChange={(e) =>
                     setBatchSize(Math.max(8, Math.min(128, Number(e.target.value) || 32)))
                   }
-                  className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-1.5 font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                  className="raira-input w-full rounded-lg px-3 py-1.5 font-mono"
                 />
               </div>
             ) : (
               <div>
-                <label htmlFor="rl-eps-min" className="block text-slate-400 mb-1">
+                <label htmlFor="rl-eps-min" className="block text-[var(--text-muted)] mb-1">
                   Minimum Epsilon
                 </label>
                 <input
@@ -583,7 +622,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                   disabled={isRunning}
                   value={epsilonMin}
                   onChange={(e) => setEpsilonMin(Number(e.target.value) || 0.05)}
-                  className="w-full rounded-lg border border-slate-700 bg-[#070D19] px-3 py-1.5 font-mono text-slate-100 focus:border-cyan-500 focus:outline-none"
+                  className="raira-input w-full rounded-lg px-3 py-1.5 font-mono"
                 />
               </div>
             )}
@@ -597,7 +636,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                   type="button"
                   onClick={handleStart}
                   disabled={busy || Boolean(dqnUnavailable)}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-cyan-500 px-3.5 py-2 text-xs font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-40 cursor-pointer whitespace-nowrap"
+                  className="raira-btn-primary flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-semibold disabled:opacity-40 cursor-pointer whitespace-nowrap"
                 >
                   <Play className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>Start Training</span>
@@ -606,7 +645,12 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                   type="button"
                   onClick={handleTrainBoth}
                   disabled={busy || Boolean(dqnStatus && !dqnStatus.available)}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-40 cursor-pointer whitespace-nowrap"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold disabled:opacity-40 cursor-pointer whitespace-nowrap"
+                  style={{
+                    borderColor: 'var(--status-success)',
+                    backgroundColor: 'var(--status-success-soft)',
+                    color: 'var(--status-success)',
+                  }}
                 >
                   <Play className="h-3.5 w-3.5" aria-hidden="true" />
                   <span>Train Both (Q + DQN)</span>
@@ -617,7 +661,12 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
               <button
                 type="button"
                 onClick={handlePause}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500/20 border border-amber-500/40 px-3.5 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/30 cursor-pointer"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border px-3.5 py-2 text-xs font-semibold cursor-pointer"
+                style={{
+                  borderColor: 'var(--status-warning)',
+                  backgroundColor: 'var(--status-warning-soft)',
+                  color: 'var(--status-warning)',
+                }}
               >
                 <Pause className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Pause</span>
@@ -627,7 +676,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
               <button
                 type="button"
                 onClick={handleResume}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-3.5 py-2 text-xs font-semibold text-slate-950 hover:bg-emerald-400 cursor-pointer"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 dark:bg-emerald-500 px-3.5 py-2 text-xs font-semibold text-white dark:text-slate-950 hover:bg-emerald-700 dark:hover:bg-emerald-400 cursor-pointer"
               >
                 <Play className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Resume</span>
@@ -637,7 +686,12 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
               <button
                 type="button"
                 onClick={handleStop}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/40 bg-red-500/15 px-3 py-2 text-xs font-medium text-red-300 hover:bg-red-500/25 cursor-pointer"
+                className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium cursor-pointer"
+                style={{
+                  borderColor: 'var(--status-danger)',
+                  backgroundColor: 'var(--status-danger-soft)',
+                  color: 'var(--status-danger)',
+                }}
               >
                 <Square className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Stop</span>
@@ -647,7 +701,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
               type="button"
               onClick={handleResetAgent}
               disabled={isRunning || busy}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 disabled:opacity-40 cursor-pointer"
+              className="raira-btn-secondary inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium disabled:opacity-40 cursor-pointer"
             >
               <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
               <span>Reset Agent</span>
@@ -655,14 +709,17 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
           </div>
 
           {/* Model Checkpointing */}
-          <div className="pt-3 border-t border-slate-800/70 space-y-2">
-            <div className="text-xs font-medium text-slate-300">Model Checkpoints</div>
+          <div
+            className="pt-3 border-t space-y-2"
+            style={{ borderColor: 'var(--border-subtle)' }}
+          >
+            <div className="text-xs font-medium text-[var(--text-secondary)]">Model Checkpoints</div>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={handleSaveCheckpoint}
                 disabled={isRunning || !agentSummary?.isTrained}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800 disabled:opacity-40 cursor-pointer"
+                className="raira-btn-secondary inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs disabled:opacity-40 cursor-pointer"
               >
                 <Save className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Save Model</span>
@@ -671,7 +728,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                 type="button"
                 onClick={handleLoadFromBrowser}
                 disabled={isRunning}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800 disabled:opacity-40 cursor-pointer"
+                className="raira-btn-secondary inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs disabled:opacity-40 cursor-pointer"
               >
                 <Download className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Load Saved</span>
@@ -680,7 +737,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isRunning}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800 disabled:opacity-40 cursor-pointer"
+                className="raira-btn-secondary inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs disabled:opacity-40 cursor-pointer"
               >
                 <Upload className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>Import JSON</span>
@@ -700,9 +757,9 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
         {/* Right Live Training Charts */}
         <section className="xl:col-span-8 space-y-5">
           {/* Progress Bar */}
-          <div className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5 space-y-2.5">
+          <div className="raira-card raira-card-pad space-y-2.5">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-slate-200">
+              <span className="font-medium text-[var(--text-primary)]">
                 {training?.batchStageLabel
                   ? training.batchStageLabel
                   : `Training Session Progress · ${
@@ -711,7 +768,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                         : 'Tabular Q-Learning'
                     }`}
               </span>
-              <span className="font-mono tabular-nums text-cyan-400">
+              <span className="font-mono tabular-nums text-[var(--accent-text)]">
                 {training?.state === 'TRAINING' || training?.state === 'PAUSED'
                   ? `${training.currentEpisode} / ${training.totalEpisodes} episodes (${progressPercent.toFixed(0)}%)`
                   : agentSummary?.isTrained
@@ -719,7 +776,10 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                     : '0 / 0 episodes (0%)'}
               </span>
             </div>
-            <div className="h-2.5 w-full rounded-full bg-slate-900 overflow-hidden">
+            <div
+              className="h-2.5 w-full rounded-full overflow-hidden"
+              style={{ backgroundColor: 'var(--border-subtle)' }}
+            >
               <div
                 style={{
                   width: `${
@@ -729,59 +789,67 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                         ? 100
                         : 0
                   }%`,
+                  backgroundColor: 'var(--accent-primary)',
                 }}
-                className="h-full bg-cyan-500 transition-all duration-200"
+                className="h-full transition-all duration-200"
               />
             </div>
           </div>
 
           {/* Reward Progression Chart */}
-          <div className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5">
+          <div className="raira-card raira-card-pad">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-display text-sm font-semibold text-slate-100">
+                <h3 className="font-display text-sm font-semibold text-[var(--text-primary)]">
                   Episode Reward Progression
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[var(--text-muted)]">
                   Actual episode reward and 10-episode moving average (never hardcoded)
                 </p>
               </div>
-              <span className="text-xs font-mono text-slate-500">
+              <span className="text-xs font-mono text-[var(--text-muted)]">
                 {activeHistory.length} episodes plotted
               </span>
             </div>
 
             <div className="h-64 w-full">
               {activeHistory.length === 0 ? (
-                <div className="h-full flex items-center justify-center rounded-lg border border-dashed border-slate-800 text-xs text-slate-500">
+                <div className="raira-empty-state h-full flex items-center justify-center text-xs px-4 text-center">
                   Click Start Training to observe real-time RL reward progression.
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={activeHistory} margin={{ top: 8, right: 16, left: -8, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
+                  <LineChart
+                    data={activeHistory}
+                    margin={{ top: 8, right: 16, left: -8, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
                     <XAxis
                       dataKey="episode"
-                      stroke="#64748B"
-                      tick={{ fontSize: 11, fill: '#94A3B8' }}
+                      stroke={chartTheme.axis}
+                      tick={{ fontSize: 11, fill: chartTheme.tick }}
                       tickFormatter={(v) => `Ep ${v}`}
                     />
-                    <YAxis stroke="#64748B" tick={{ fontSize: 11, fill: '#94A3B8' }} />
+                    <YAxis
+                      stroke={chartTheme.axis}
+                      tick={{ fontSize: 11, fill: chartTheme.tick }}
+                    />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#0F172A',
-                        borderColor: '#334155',
+                        backgroundColor: chartTheme.tooltipBg,
+                        borderColor: chartTheme.tooltipBorder,
                         borderRadius: '8px',
                         fontSize: '12px',
-                        color: '#E2E8F0',
+                        color: chartTheme.tooltipText,
                       }}
+                      labelStyle={{ color: chartTheme.tooltipLabel }}
                     />
-                    <Legend wrapperStyle={{ fontSize: '12px' }} />
+                    <Legend wrapperStyle={{ fontSize: '12px', color: chartTheme.tick }} />
                     <Line
                       type="monotone"
                       dataKey="totalReward"
                       name="Episode Reward"
-                      stroke="#38BDF8"
+                      stroke={chartTheme.primary}
                       strokeWidth={1.75}
                       dot={false}
                       isAnimationActive={false}
@@ -790,7 +858,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                       type="monotone"
                       dataKey="avgRewardLast10"
                       name="10-Ep Moving Avg"
-                      stroke="#10B981"
+                      stroke={chartTheme.success}
                       strokeWidth={2.25}
                       dot={false}
                       isAnimationActive={false}
@@ -801,50 +869,57 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
             </div>
           </div>
 
-          {/* Secondary Metric Chart (DQN Loss or Waiting Time & Epsilon) */}
-          <div className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5">
+          {/* Secondary Metric Chart */}
+          <div className="raira-card raira-card-pad">
             <div className="mb-4">
-              <h3 className="font-display text-sm font-semibold text-slate-100">
+              <h3 className="font-display text-sm font-semibold text-[var(--text-primary)]">
                 {agentType === 'DQN'
                   ? 'DQN Training Loss & Average Waiting Time'
                   : 'Average Waiting Time & Turnaround Time per Episode'}
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--text-muted)]">
                 Empirical scheduling quality measured directly from simulation state transitions
               </p>
             </div>
 
             <div className="h-56 w-full">
               {activeHistory.length === 0 ? (
-                <div className="h-full flex items-center justify-center rounded-lg border border-dashed border-slate-800 text-xs text-slate-500">
+                <div className="raira-empty-state h-full flex items-center justify-center text-xs px-4 text-center">
                   Training diagnostics will appear here once episodes complete.
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={activeHistory} margin={{ top: 8, right: 16, left: -8, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
+                  <LineChart
+                    data={activeHistory}
+                    margin={{ top: 8, right: 16, left: -8, bottom: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.grid} />
                     <XAxis
                       dataKey="episode"
-                      stroke="#64748B"
-                      tick={{ fontSize: 11, fill: '#94A3B8' }}
+                      stroke={chartTheme.axis}
+                      tick={{ fontSize: 11, fill: chartTheme.tick }}
                       tickFormatter={(v) => `Ep ${v}`}
                     />
-                    <YAxis stroke="#64748B" tick={{ fontSize: 11, fill: '#94A3B8' }} />
+                    <YAxis
+                      stroke={chartTheme.axis}
+                      tick={{ fontSize: 11, fill: chartTheme.tick }}
+                    />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: '#0F172A',
-                        borderColor: '#334155',
+                        backgroundColor: chartTheme.tooltipBg,
+                        borderColor: chartTheme.tooltipBorder,
                         borderRadius: '8px',
                         fontSize: '12px',
-                        color: '#E2E8F0',
+                        color: chartTheme.tooltipText,
                       }}
+                      labelStyle={{ color: chartTheme.tooltipLabel }}
                     />
-                    <Legend wrapperStyle={{ fontSize: '12px' }} />
+                    <Legend wrapperStyle={{ fontSize: '12px', color: chartTheme.tick }} />
                     <Line
                       type="monotone"
                       dataKey="avgWaitingTime"
                       name="Avg Waiting Time (t)"
-                      stroke="#F59E0B"
+                      stroke={chartTheme.warning}
                       strokeWidth={2}
                       dot={false}
                       isAnimationActive={false}
@@ -854,7 +929,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                         type="monotone"
                         dataKey="dqnLoss"
                         name="DQN Huber Loss"
-                        stroke="#EF4444"
+                        stroke={chartTheme.danger}
                         strokeWidth={2}
                         dot={false}
                         isAnimationActive={false}
@@ -864,7 +939,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
                         type="monotone"
                         dataKey="avgTurnaroundTime"
                         name="Avg Turnaround (t)"
-                        stroke="#818CF8"
+                        stroke={chartTheme.tertiary}
                         strokeWidth={2}
                         dot={false}
                         isAnimationActive={false}

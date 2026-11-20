@@ -4,17 +4,33 @@ import type {
   SerializedDQNModel,
   SerializedQLearningModel,
 } from '../types/reinforcementLearning';
+import type {
+  ShockArenaReport,
+  StatisticalValidationReport,
+} from '../types/intelligence';
+import type { RewardWeights } from '../types/simulation';
 
 const HISTORY_KEY = 'raira_experiment_history_v1';
 const COMPARISONS_KEY = 'raira_comparisons_v1';
 const MODEL_PREFIX = 'raira_saved_model_v1_';
 const SETTINGS_KEY = 'raira_settings_v1';
+const SHOCK_REPORTS_KEY = 'raira_shock_reports_v2';
+const VALIDATION_REPORTS_KEY = 'raira_validation_reports_v2';
+const REWARD_CONFIGS_KEY = 'raira_reward_configs_v2';
 
 export interface UserSettings {
   stepIntervalMs: number;
   defaultRrQuantum: number;
   defaultSeed: number;
   defaultNumProcesses: number;
+  starvationThreshold: number;
+}
+
+export interface SavedRewardConfig {
+  id: string;
+  name: string;
+  savedAt: string;
+  weights: RewardWeights;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -22,6 +38,7 @@ const DEFAULT_SETTINGS: UserSettings = {
   defaultRrQuantum: 2,
   defaultSeed: 42,
   defaultNumProcesses: 10,
+  starvationThreshold: 15,
 };
 
 function safeRead<T>(key: string, fallback: T): T {
@@ -82,6 +99,45 @@ export const experimentStorage = {
     const current = this.loadComparisons();
     const updated = [batch, ...current.filter((b) => b.id !== batch.id)].slice(0, 20);
     safeWrite(COMPARISONS_KEY, updated);
+    return updated;
+  },
+
+  loadShockReports(): ShockArenaReport[] {
+    return safeRead<ShockArenaReport[]>(SHOCK_REPORTS_KEY, []);
+  },
+
+  saveShockReport(report: ShockArenaReport): ShockArenaReport[] {
+    const current = this.loadShockReports();
+    const updated = [report, ...current.filter((r) => r.id !== report.id)].slice(0, 10);
+    safeWrite(SHOCK_REPORTS_KEY, updated);
+    return updated;
+  },
+
+  loadValidationReports(): StatisticalValidationReport[] {
+    return safeRead<StatisticalValidationReport[]>(VALIDATION_REPORTS_KEY, []);
+  },
+
+  saveValidationReport(report: StatisticalValidationReport): StatisticalValidationReport[] {
+    const current = this.loadValidationReports();
+    const updated = [report, ...current.filter((r) => r.id !== report.id)].slice(0, 10);
+    safeWrite(VALIDATION_REPORTS_KEY, updated);
+    return updated;
+  },
+
+  loadSavedRewardConfigs(): SavedRewardConfig[] {
+    return safeRead<SavedRewardConfig[]>(REWARD_CONFIGS_KEY, []);
+  },
+
+  saveRewardConfig(name: string, weights: RewardWeights): SavedRewardConfig[] {
+    const current = this.loadSavedRewardConfigs();
+    const entry: SavedRewardConfig = {
+      id: `rw-${Date.now().toString(36)}`,
+      name: name.trim() || 'Custom Reward Profile',
+      savedAt: new Date().toISOString(),
+      weights: { ...weights },
+    };
+    const updated = [entry, ...current].slice(0, 15);
+    safeWrite(REWARD_CONFIGS_KEY, updated);
     return updated;
   },
 

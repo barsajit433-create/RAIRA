@@ -50,15 +50,15 @@ export function formatWorkloadName(w: WorkloadType): string {
 export function getStatusTextClass(status: ProcessStatus): string {
   switch (status) {
     case 'RUNNING':
-      return 'text-cyan-400 font-semibold';
+      return 'text-[var(--accent-text)] font-semibold';
     case 'READY':
-      return 'text-blue-400';
+      return 'text-blue-700 dark:text-blue-400';
     case 'BLOCKED':
-      return 'text-amber-400';
+      return 'text-amber-700 dark:text-amber-400';
     case 'COMPLETED':
-      return 'text-emerald-400';
+      return 'text-emerald-700 dark:text-emerald-400';
     case 'NEW':
-      return 'text-slate-400';
+      return 'text-[var(--text-muted)]';
   }
 }
 
@@ -76,11 +76,11 @@ export function formatProvenanceLabel(provenance: ResultProvenance): string {
 export function getProvenanceClass(provenance: ResultProvenance): string {
   switch (provenance) {
     case 'ACTUAL_GENERATED':
-      return 'text-emerald-400';
+      return 'text-emerald-700 dark:text-emerald-400';
     case 'ILLUSTRATIVE_DEMO':
-      return 'text-cyan-400';
+      return 'text-[var(--accent-text)]';
     case 'UNAVAILABLE_UNTRAINED':
-      return 'text-amber-400';
+      return 'text-amber-700 dark:text-amber-400';
   }
 }
 

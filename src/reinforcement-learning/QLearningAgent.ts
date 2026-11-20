@@ -88,6 +88,48 @@ export class QLearningAgent {
   }
 
   /**
+   * Evaluates Q(s, a) for every currently valid action without mutating agent state or RNG.
+   * Used by the Explainable AI Decision Engine and Counterfactual What-If Laboratory.
+   */
+  evaluateValidActions(params: {
+    processes: ProcessRecord[];
+    currentTick: number;
+    availableRamMb: number;
+    totalRamMb: number;
+    prevTickCpuBusy: boolean;
+    actionMask: boolean[];
+  }): {
+    compactStateKey: string;
+    validActionQValues: Array<{ actionId: number; qValue: number; stateActionKey: string }>;
+  } {
+    const validActions = getValidActionIndices(params.actionMask);
+    const compactStateKey = encodeCompactStateKey({
+      processes: params.processes,
+      currentTick: params.currentTick,
+      availableRamMb: params.availableRamMb,
+      totalRamMb: params.totalRamMb,
+      prevTickCpuBusy: params.prevTickCpuBusy,
+    });
+
+    const validActionQValues = validActions.map((actionId) => {
+      const stateActionKey = encodeCandidateStateActionKey({
+        compactStateKey,
+        actionId,
+        processes: params.processes,
+        availableRamMb: params.availableRamMb,
+      });
+      return {
+        actionId,
+        qValue: this.getQValue(stateActionKey),
+        stateActionKey,
+      };
+    });
+
+    validActionQValues.sort((a, b) => b.qValue - a.qValue || a.actionId - b.actionId);
+    return { compactStateKey, validActionQValues };
+  }
+
+  /**
    * Selects a valid masked action using epsilon-greedy exploration (during training)
    * or greedy exploitation (during evaluation, explore = false).
    */

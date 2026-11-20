@@ -1,5 +1,6 @@
-import type { WorkloadType } from './process';
-import type { AlgorithmType, SimulationMetrics, TickTelemetry } from './simulation';
+import type { WorkloadType } from './process.ts';
+import type { AlgorithmType, RewardWeights, SimulationMetrics, TickTelemetry } from './simulation.ts';
+import type { RewardPresetId } from './intelligence.ts';
 
 export type ResultProvenance =
   | 'ACTUAL_GENERATED'
@@ -66,5 +67,7 @@ export interface ExperimentRecord {
   throughput: number;
   jainFairness: number;
   reward: number;
+  rewardPreset?: RewardPresetId;
+  rewardWeights?: RewardWeights;
   notes?: string;
 }

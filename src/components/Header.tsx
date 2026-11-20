@@ -1,49 +1,88 @@
 import React from 'react';
-import { Menu, Play } from 'lucide-react';
+import { Menu, Palette, Play } from 'lucide-react';
 import type { NavPageId } from './Sidebar';
 import type { SimulationSnapshot } from '../types/simulation';
 import { formatAlgorithmName } from '../utils/formatters';
+import { useTheme } from '../theme/ThemeContext';
 
 interface HeaderProps {
   activePage: NavPageId;
   simulation: SimulationSnapshot | null;
   onOpenMobileMenu: () => void;
   onLaunchDemo: () => void;
+  onNavigate: (page: NavPageId) => void;
   demoLoading: boolean;
 }
 
-const PAGE_TITLES: Record<NavPageId, { title: string; subtitle: string }> = {
+const PAGE_TITLES: Record<NavPageId, { workspace: string; title: string; subtitle: string }> = {
   overview: {
+    workspace: 'Intelligence Lab',
     title: 'Overview Dashboard',
     subtitle: 'Intelligent Resource Allocation Using Reinforcement Learning',
   },
+  intelligence: {
+    workspace: 'Intelligence Lab',
+    title: 'Explainable AI & Counterfactual Lab',
+    subtitle:
+      'Ground-truth RL Q-value inspection, DQN feature sensitivity, and isolated counterfactual branching',
+  },
+  training: {
+    workspace: 'Intelligence Lab',
+    title: 'RL Training Centre',
+    subtitle:
+      'Train Tabular Q-Learning and TensorFlow.js Deep Q-Network agents with SMDP discounting',
+  },
   processes: {
+    workspace: 'Simulation Lab',
     title: 'Process Manager',
     subtitle: 'Manual process creation, validation, and deterministic workload generation',
   },
   simulation: {
-    title: 'Live Simulation',
-    subtitle: 'Discrete-time single-core CPU scheduling and 4096 MB dynamic RAM allocation',
+    workspace: 'Simulation Lab',
+    title: 'Live Simulation & Execution Timeline',
+    subtitle:
+      'Discrete-time CPU scheduling, 4096 MB RAM allocation, and synchronized Gantt & memory timelines',
   },
-  training: {
-    title: 'RL Training Centre',
-    subtitle: 'Train Tabular Q-Learning and TensorFlow.js Deep Q-Network agents with SMDP discounting',
+  'shock-arena': {
+    workspace: 'Simulation Lab',
+    title: 'Workload Shock Arena',
+    subtitle: 'Controlled mid-episode disturbance injection and 5-policy resilience evaluation',
+  },
+  fairness: {
+    workspace: 'Simulation Lab',
+    title: 'Fairness & Starvation Monitor',
+    subtitle:
+      'Processor-sharing service fairness, starvation risk detection, and reward objective tuning',
   },
   comparison: {
-    title: 'Algorithm Comparison',
-    subtitle: 'Controlled head-to-head evaluation across identical workloads and random seeds',
+    workspace: 'Research Lab',
+    title: 'Algorithm Comparison & Statistical Validation',
+    subtitle:
+      'Head-to-head benchmarking and ≥30-seed confidence interval evaluation across identical workloads',
   },
   analytics: {
-    title: 'Research Analytics',
-    subtitle: 'Empirical learning curves, resource utilisation trends, fairness analysis, and data export',
+    workspace: 'Research Lab',
+    title: 'Research Analytics & Ablation Lab',
+    subtitle:
+      'Learning curves, unseen-workload generalisation, controlled ablations, and CSV/JSON export',
   },
   history: {
+    workspace: 'Research Lab',
     title: 'Experiment History',
-    subtitle: 'Browser-persisted experiment logs with seed reproducibility and JSON/CSV export',
+    subtitle:
+      'Browser-persisted experiment logs with reward metadata, seed reproducibility, and export',
   },
   'project-info': {
+    workspace: 'Research Lab',
     title: 'Project Information',
-    subtitle: 'Intelligent Resource Allocation Using Reinforcement Learning — Research Documentation',
+    subtitle:
+      'Intelligent Resource Allocation Using Reinforcement Learning — Research Documentation',
+  },
+  'design-studio': {
+    workspace: 'Application Settings',
+    title: 'Appearance & Design Studio',
+    subtitle:
+      'Multi-theme switcher, visual density, accent calibration, and chart rendering preferences',
   },
 };
 
@@ -52,61 +91,100 @@ export const Header: React.FC<HeaderProps> = ({
   simulation,
   onOpenMobileMenu,
   onLaunchDemo,
+  onNavigate,
   demoLoading,
 }) => {
+  const { activeTheme } = useTheme();
   const meta = PAGE_TITLES[activePage];
   const hasProcesses = (simulation?.processes.length ?? 0) > 0;
 
   return (
-    <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-[#060B14]/85 backdrop-blur-md">
-      <div className="flex items-center justify-between gap-4 px-4 sm:px-6 lg:px-8 py-3.5">
+    <header
+      className="sticky top-0 z-30 border-b backdrop-blur-md transition-colors duration-200"
+      style={{
+        backgroundColor: 'var(--surface-header)',
+        borderColor: 'var(--border-subtle)',
+      }}
+    >
+      <div className="flex items-center justify-between gap-4 px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
             onClick={onOpenMobileMenu}
             aria-label="Open navigation menu"
-            className="lg:hidden inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-800 bg-[#0B1221] text-slate-300 hover:bg-slate-800 hover:text-white"
+            className="lg:hidden inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[var(--border-strong)] bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] cursor-pointer"
           >
             <Menu className="h-5 w-5" aria-hidden="true" />
           </button>
 
           <div className="min-w-0">
-            <h1 className="font-display text-lg sm:text-xl font-semibold tracking-tight text-slate-100 truncate">
-              {meta.title}
-            </h1>
-            <p className="text-xs text-slate-400 truncate hidden sm:block">{meta.subtitle}</p>
+            <div className="flex items-center gap-2">
+              <span
+                className="hidden sm:inline text-[10px] font-mono uppercase tracking-[0.12em] whitespace-nowrap"
+                style={{ color: 'var(--accent-text)' }}
+              >
+                {meta.workspace}
+              </span>
+              <span
+                className="hidden sm:inline text-[var(--text-muted)] opacity-50 text-xs"
+                aria-hidden="true"
+              >
+                /
+              </span>
+              <h1 className="font-display text-base sm:text-lg font-semibold tracking-tight text-[var(--text-primary)] truncate">
+                {meta.title}
+              </h1>
+            </div>
+            <p className="text-xs text-[var(--text-muted)] truncate hidden sm:block">
+              {meta.subtitle}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           {simulation && (
-            <div className="hidden md:flex items-center gap-2 text-xs text-slate-400 font-mono tabular-nums">
-              <span className="text-slate-300">{formatAlgorithmName(simulation.algorithm)}</span>
+            <div className="hidden xl:flex items-center gap-2 text-xs text-[var(--text-muted)] font-mono tabular-nums">
+              <span className="text-[var(--text-secondary)]">
+                {formatAlgorithmName(simulation.algorithm)}
+              </span>
               <span aria-hidden="true">·</span>
               <span>Tick {simulation.currentTick}</span>
               <span aria-hidden="true">·</span>
               <span
-                className={
-                  simulation.status === 'RUNNING'
-                    ? 'text-cyan-400'
-                    : simulation.status === 'COMPLETED'
-                      ? 'text-emerald-400'
-                      : simulation.status === 'PAUSED'
-                        ? 'text-amber-400'
-                        : 'text-slate-400'
-                }
+                style={{
+                  color:
+                    simulation.status === 'RUNNING'
+                      ? 'var(--accent-text)'
+                      : simulation.status === 'COMPLETED'
+                        ? 'var(--status-success)'
+                        : simulation.status === 'PAUSED'
+                          ? 'var(--status-warning)'
+                          : 'var(--text-muted)',
+                }}
               >
                 {simulation.status}
               </span>
             </div>
           )}
 
-          {!hasProcesses && activePage !== 'overview' && (
+          {activePage !== 'design-studio' && (
+            <button
+              type="button"
+              onClick={() => onNavigate('design-studio')}
+              aria-label={`Open Design Studio (${activeTheme.shortName})`}
+              className="raira-btn-secondary inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-medium whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              <Palette className="h-3.5 w-3.5 text-[var(--accent-text)]" aria-hidden="true" />
+              <span className="hidden sm:inline">{activeTheme.shortName}</span>
+            </button>
+          )}
+
+          {!hasProcesses && activePage !== 'overview' && activePage !== 'design-studio' && (
             <button
               type="button"
               onClick={onLaunchDemo}
               disabled={demoLoading}
-              className="inline-flex items-center gap-2 rounded-lg bg-cyan-500 px-3.5 py-2 text-xs font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              className="raira-btn-primary inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold disabled:opacity-50 whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Play className="h-3.5 w-3.5" aria-hidden="true" />
               <span>{demoLoading ? 'Loading...' : 'Launch Demo Workload'}</span>

@@ -15,6 +15,15 @@ export class ResourceManager {
     this.reservations.clear();
   }
 
+  clone(): ResourceManager {
+    const copy = new ResourceManager(this.totalRamMb);
+    copy.allocatedRamMb = this.allocatedRamMb;
+    for (const [procId, mb] of this.reservations.entries()) {
+      copy.reservations.set(procId, mb);
+    }
+    return copy;
+  }
+
   getAllocatedRamMb(): number {
     return this.allocatedRamMb;
   }
