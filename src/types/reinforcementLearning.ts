@@ -79,6 +79,10 @@ export interface TrainingSessionSnapshot {
   qTableStates: number;
   lastLoss: number | null;
   history: TrainingEpisodeMetric[];
+  qLearningHistory: TrainingEpisodeMetric[];
+  dqnHistory: TrainingEpisodeMetric[];
+  batchActive: boolean;
+  batchStageLabel: string | null;
   error: string | null;
   qLearningSummary: RLAgentSummary;
   dqnSummary: RLAgentSummary;

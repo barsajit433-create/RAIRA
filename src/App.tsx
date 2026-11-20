@@ -47,8 +47,13 @@ export default function App() {
 
   const syncTrainingHistories = useCallback((snap: TrainingSessionSnapshot) => {
     setTraining(snap);
-    if (snap.config?.agentType === 'Q_LEARNING' && snap.history.length > 0) {
+    if (Array.isArray(snap.qLearningHistory)) {
+      setQHistory(snap.qLearningHistory);
+    } else if (snap.config?.agentType === 'Q_LEARNING' && snap.history.length > 0) {
       setQHistory(snap.history);
+    }
+    if (Array.isArray(snap.dqnHistory)) {
+      setDqnHistory(snap.dqnHistory);
     } else if (snap.config?.agentType === 'DQN' && snap.history.length > 0) {
       setDqnHistory(snap.history);
     }

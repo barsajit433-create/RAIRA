@@ -93,11 +93,14 @@ export const rairaApi = {
   getHealth(): Promise<{ ok: boolean; service: string; dqnStatus: DQNDependencyStatus }> {
     return callWithFallback(
       () => fetchBackendJson('/api/health'),
-      async (svc) => ({
-        ok: true,
-        service: 'RAIRA Embedded Isomorphic Engine',
-        dqnStatus: await svc.dqnAgent.initialize(),
-      })
+      async (svc) => {
+        await svc.ensureReady();
+        return {
+          ok: true,
+          service: 'RAIRA Embedded Isomorphic Engine',
+          dqnStatus: await svc.dqnAgent.initialize(),
+        };
+      }
     );
   },
 
@@ -138,7 +141,10 @@ export const rairaApi = {
   getSimulationState(): Promise<SimulationSnapshot> {
     return callWithFallback(
       () => fetchBackendJson('/api/simulation/state'),
-      (svc) => svc.getSimulationSnapshot()
+      async (svc) => {
+        await svc.ensureReady();
+        return svc.getSimulationSnapshot();
+      }
     );
   },
 
@@ -233,7 +239,7 @@ export const rairaApi = {
     return callWithFallback(
       () => fetchBackendJson('/api/rl/status'),
       async (svc) => {
-        await svc.dqnAgent.initialize();
+        await svc.ensureReady();
         return svc.getTrainingSnapshot();
       }
     );
@@ -247,6 +253,24 @@ export const rairaApi = {
           body: JSON.stringify(config),
         }),
       (svc) => svc.startTraining(config)
+    );
+  },
+
+  trainBothAgents(params: {
+    workloadType: WorkloadType;
+    numProcesses: number;
+    qEpisodes: number;
+    dqnEpisodes: number;
+    discountFactor: number;
+    seed: number;
+  }): Promise<TrainingSessionSnapshot> {
+    return callWithFallback(
+      () =>
+        fetchBackendJson('/api/rl/train/both', {
+          method: 'POST',
+          body: JSON.stringify(params),
+        }),
+      (svc) => svc.startTrainBoth(params)
     );
   },
 

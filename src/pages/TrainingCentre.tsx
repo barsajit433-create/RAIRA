@@ -75,9 +75,26 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
       : 0;
 
   const activeHistory =
-    training && training.config?.agentType === agentType && training.history.length > 0
+    training && training.state === 'TRAINING' && training.config?.agentType === agentType && training.history.length > 0
       ? training.history
-      : [];
+      : agentType === 'DQN'
+        ? (training?.dqnHistory ?? [])
+        : (training?.qLearningHistory ?? []);
+
+  const agentSummary = agentType === 'DQN' ? training?.dqnSummary : training?.qLearningSummary;
+  const latestEpMetric = activeHistory.length > 0 ? activeHistory[activeHistory.length - 1] : null;
+  const displayedCurrentReward =
+    training?.state === 'TRAINING' && training.config?.agentType === agentType
+      ? training.currentReward
+      : (latestEpMetric?.totalReward ?? null);
+  const displayedAvgReward =
+    training?.state === 'TRAINING' && training.config?.agentType === agentType
+      ? training.averageReward
+      : (agentSummary?.averageReward ?? null);
+  const displayedBestReward =
+    training?.state === 'TRAINING' && training.config?.agentType === agentType
+      ? training.bestReward
+      : (agentSummary?.bestReward ?? null);
 
   const handleStart = async () => {
     setBusy(true);
@@ -101,6 +118,34 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
       onTrainingUpdated(snap);
       if (snap.state === 'ERROR') {
         setFeedback({ tone: 'err', text: snap.error ?? 'Training failed to start.' });
+      }
+    } catch (err) {
+      setFeedback({ tone: 'err', text: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleTrainBoth = async () => {
+    setBusy(true);
+    setFeedback(null);
+    try {
+      const snap = await rairaApi.trainBothAgents({
+        workloadType,
+        numProcesses,
+        qEpisodes: agentType === 'Q_LEARNING' ? episodes : 30,
+        dqnEpisodes: agentType === 'DQN' ? episodes : 15,
+        discountFactor,
+        seed,
+      });
+      onTrainingUpdated(snap);
+      if (snap.state === 'ERROR') {
+        setFeedback({ tone: 'err', text: snap.error ?? 'Sequential training failed to start.' });
+      } else {
+        setFeedback({
+          tone: 'ok',
+          text: 'Sequential training started: Tabular Q-Learning followed automatically by TensorFlow.js DQN.',
+        });
       }
     } catch (err) {
       setFeedback({ tone: 'err', text: err instanceof Error ? err.message : String(err) });
@@ -198,8 +243,6 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
     }
   };
 
-  const agentSummary = agentType === 'DQN' ? training?.dqnSummary : training?.qLearningSummary;
-
   return (
     <div className="space-y-6">
       {/* DQN Dependency Error / Status Callout */}
@@ -234,7 +277,11 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
       <section className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
         <MetricCard
           label="Training Status"
-          value={training?.state ?? 'IDLE'}
+          value={
+            training?.state === 'IDLE' && agentSummary?.isTrained
+              ? 'TRAINED'
+              : (training?.state ?? 'IDLE')
+          }
           detail={
             agentSummary?.isTrained
               ? `${agentSummary.episodesTrained} total ep trained`
@@ -243,7 +290,7 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
           tone={
             training?.state === 'TRAINING'
               ? 'cyan'
-              : training?.state === 'COMPLETED'
+              : training?.state === 'COMPLETED' || (training?.state === 'IDLE' && agentSummary?.isTrained)
                 ? 'emerald'
                 : training?.state === 'ERROR'
                   ? 'red'
@@ -252,21 +299,39 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
         />
         <MetricCard
           label="Current Episode"
-          value={`${training?.currentEpisode ?? 0} / ${training?.totalEpisodes ?? 0}`}
-          detail={`${progressPercent.toFixed(0)}% complete`}
+          value={
+            training?.state === 'TRAINING' || training?.state === 'PAUSED'
+              ? `${training.currentEpisode} / ${training.totalEpisodes}`
+              : `${agentSummary?.episodesTrained ?? 0} ep`
+          }
+          detail={
+            training?.state === 'TRAINING'
+              ? `${progressPercent.toFixed(0)}% complete`
+              : agentSummary?.isTrained
+                ? 'Checkpoint ready'
+                : 'Not trained yet'
+          }
         />
         <MetricCard
-          label="Current Reward"
-          value={training?.currentReward !== null && training?.currentReward !== undefined ? training.currentReward.toFixed(2) : '—'}
+          label="Latest Reward"
+          value={
+            displayedCurrentReward !== null && displayedCurrentReward !== undefined
+              ? displayedCurrentReward.toFixed(2)
+              : '—'
+          }
           detail="Last completed episode"
           tone="cyan"
         />
         <MetricCard
           label="Average / Best Reward"
-          value={training?.averageReward !== null && training?.averageReward !== undefined ? training.averageReward.toFixed(2) : '—'}
+          value={
+            displayedAvgReward !== null && displayedAvgReward !== undefined
+              ? displayedAvgReward.toFixed(2)
+              : '—'
+          }
           detail={
-            training?.bestReward !== null && training?.bestReward !== undefined
-              ? `Best: ${training.bestReward.toFixed(2)}`
+            displayedBestReward !== null && displayedBestReward !== undefined
+              ? `Best: ${displayedBestReward.toFixed(2)}`
               : 'No episodes yet'
           }
           tone="emerald"
@@ -527,15 +592,26 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
           {/* Primary Training Controls */}
           <div className="flex flex-wrap items-center gap-2 pt-2">
             {!isRunning && !isPaused && (
-              <button
-                type="button"
-                onClick={handleStart}
-                disabled={busy || Boolean(dqnUnavailable)}
-                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-cyan-500 px-3.5 py-2 text-xs font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-40 cursor-pointer whitespace-nowrap"
-              >
-                <Play className="h-3.5 w-3.5" aria-hidden="true" />
-                <span>Start Training</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={handleStart}
+                  disabled={busy || Boolean(dqnUnavailable)}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-cyan-500 px-3.5 py-2 text-xs font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-40 cursor-pointer whitespace-nowrap"
+                >
+                  <Play className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Start Training</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTrainBoth}
+                  disabled={busy || Boolean(dqnStatus && !dqnStatus.available)}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-40 cursor-pointer whitespace-nowrap"
+                >
+                  <Play className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Train Both (Q + DQN)</span>
+                </button>
+              </>
             )}
             {isRunning && (
               <button
@@ -627,19 +703,33 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
           <div className="rounded-xl border border-slate-800/80 bg-[#0B1221] p-5 space-y-2.5">
             <div className="flex items-center justify-between text-xs">
               <span className="font-medium text-slate-200">
-                Training Session Progress ·{' '}
-                {training?.config?.agentType === 'DQN'
-                  ? 'Deep Q-Network'
-                  : 'Tabular Q-Learning'}
+                {training?.batchStageLabel
+                  ? training.batchStageLabel
+                  : `Training Session Progress · ${
+                      (training?.config?.agentType ?? agentType) === 'DQN'
+                        ? 'Deep Q-Network'
+                        : 'Tabular Q-Learning'
+                    }`}
               </span>
               <span className="font-mono tabular-nums text-cyan-400">
-                {training?.currentEpisode ?? 0} / {training?.totalEpisodes ?? 0} episodes (
-                {progressPercent.toFixed(0)}%)
+                {training?.state === 'TRAINING' || training?.state === 'PAUSED'
+                  ? `${training.currentEpisode} / ${training.totalEpisodes} episodes (${progressPercent.toFixed(0)}%)`
+                  : agentSummary?.isTrained
+                    ? `${agentSummary.episodesTrained} episodes trained (100%)`
+                    : '0 / 0 episodes (0%)'}
               </span>
             </div>
             <div className="h-2.5 w-full rounded-full bg-slate-900 overflow-hidden">
               <div
-                style={{ width: `${progressPercent}%` }}
+                style={{
+                  width: `${
+                    training?.state === 'TRAINING' || training?.state === 'PAUSED'
+                      ? progressPercent
+                      : agentSummary?.isTrained
+                        ? 100
+                        : 0
+                  }%`,
+                }}
                 className="h-full bg-cyan-500 transition-all duration-200"
               />
             </div>

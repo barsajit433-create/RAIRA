@@ -18,6 +18,10 @@ import { formatProcessId, validateProcessInput } from '../../src/simulation/Proc
 import { QLearningAgent } from '../../src/reinforcement-learning/QLearningAgent.ts';
 import { DQNAgent } from '../../src/reinforcement-learning/DQNAgent.ts';
 import { TrainingEngine } from '../../src/reinforcement-learning/TrainingEngine.ts';
+import {
+  getPretrainedDQNModel,
+  getPretrainedQLearningModel,
+} from '../../src/reinforcement-learning/pretrainedModels.ts';
 import type { BaselineAlgorithm } from '../../src/simulation/CpuScheduler.ts';
 
 export class RairaBackendService {
@@ -29,6 +33,7 @@ export class RairaBackendService {
   private simInterval: ReturnType<typeof setInterval> | null = null;
   private stepIntervalMs: number = 350;
   private lastComparison: SeedComparisonBatch | null = null;
+  private readyPromise: Promise<void>;
 
   constructor() {
     this.simulation = new SimulationEngine({
@@ -40,8 +45,29 @@ export class RairaBackendService {
     this.qAgent = new QLearningAgent(undefined, 42);
     this.dqnAgent = new DQNAgent(undefined, 42);
     this.training = new TrainingEngine(this.qAgent, this.dqnAgent);
-    // Warm up TensorFlow.js DQN backend at server startup
-    void this.dqnAgent.initialize(42);
+
+    // Load real pre-trained Tabular Q-Learning checkpoint synchronously
+    try {
+      this.qAgent.deserialize(getPretrainedQLearningModel());
+    } catch (err) {
+      console.warn('Pretrained Q-Learning hydration skipped:', err);
+    }
+
+    // Initialize TensorFlow.js and load real pre-trained DQN checkpoint asynchronously
+    this.readyPromise = this.hydratePretrainedDQN();
+  }
+
+  private async hydratePretrainedDQN(): Promise<void> {
+    try {
+      await this.dqnAgent.deserialize(getPretrainedDQNModel());
+    } catch (err) {
+      console.warn('Pretrained DQN hydration fell back to fresh init:', err);
+      await this.dqnAgent.initialize(42);
+    }
+  }
+
+  async ensureReady(): Promise<void> {
+    await this.readyPromise;
   }
 
   private getTrainedStatus() {
@@ -171,6 +197,7 @@ export class RairaBackendService {
       });
       this.simulation.stepAction(chosen.actionId, true);
     } else if (alg === 'DQN') {
+      await this.ensureReady();
       const dep = await this.dqnAgent.initialize();
       if (!dep.available) {
         this.stopAutoLoop();
@@ -196,6 +223,7 @@ export class RairaBackendService {
       this.simulation.resetEpisode();
     }
     if (this.simulation.getAlgorithm() === 'DQN') {
+      await this.ensureReady();
       const dep = await this.dqnAgent.initialize();
       if (!dep.available) {
         throw new Error(dep.error ?? 'TensorFlow.js DQN dependency unavailable.');
@@ -260,7 +288,20 @@ export class RairaBackendService {
   }
 
   async startTraining(config: RLTrainingConfig): Promise<TrainingSessionSnapshot> {
+    await this.ensureReady();
     return this.training.startTraining(config);
+  }
+
+  async startTrainBoth(params: {
+    workloadType: WorkloadType;
+    numProcesses: number;
+    qEpisodes: number;
+    dqnEpisodes: number;
+    discountFactor: number;
+    seed: number;
+  }): Promise<TrainingSessionSnapshot> {
+    await this.ensureReady();
+    return this.training.startTrainBoth(params);
   }
 
   pauseTraining(): TrainingSessionSnapshot {
@@ -315,6 +356,7 @@ export class RairaBackendService {
     const rrQuantum = Math.max(1, Math.min(16, Math.floor(params.rrQuantum || 2)));
     const includeUntrained = params.includeUntrainedRL ?? true;
 
+    await this.ensureReady();
     const dqnDep = await this.dqnAgent.initialize();
     const algorithms: AlgorithmType[] = ['FCFS', 'RR', 'PRIORITY', 'Q_LEARNING', 'DQN'];
     const perSeedResults: Record<number, AlgorithmBenchmarkResult[]> = {};

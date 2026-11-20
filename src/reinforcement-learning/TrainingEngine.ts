@@ -18,6 +18,10 @@ export class TrainingEngine {
 
   private state: TrainingRunState = 'IDLE';
   private activeConfig: RLTrainingConfig | null = null;
+  private queuedConfigs: RLTrainingConfig[] = [];
+  private batchActive: boolean = false;
+  private batchStageIndex: number = 0;
+  private batchTotalStages: number = 1;
   private currentEpisode: number = 0;
   private totalEpisodes: number = 0;
   private history: TrainingEpisodeMetric[] = [];
@@ -32,6 +36,8 @@ export class TrainingEngine {
   }
 
   getSnapshot(): TrainingSessionSnapshot {
+    const qHist = this.qAgent.getHistory();
+    const dqnHist = this.dqnAgent.getHistory();
     const latest = this.history.length > 0 ? this.history[this.history.length - 1] : null;
     const avgReward =
       this.history.length > 0
@@ -50,6 +56,13 @@ export class TrainingEngine {
     const epsilon =
       activeAgentType === 'DQN' ? this.dqnAgent.getEpsilon() : this.qAgent.getEpsilon();
 
+    const batchStageLabel =
+      this.batchActive && this.activeConfig
+        ? `Stage ${this.batchStageIndex}/${this.batchTotalStages}: ${
+            this.activeConfig.agentType === 'DQN' ? 'Deep Q-Network (DQN)' : 'Tabular Q-Learning'
+          }`
+        : null;
+
     return {
       state: this.state,
       config: this.activeConfig ? { ...this.activeConfig } : null,
@@ -62,40 +75,21 @@ export class TrainingEngine {
       qTableStates: this.qAgent.getStateCount(),
       lastLoss: this.dqnAgent.getSummary().lastLoss,
       history: [...this.history],
+      qLearningHistory: qHist,
+      dqnHistory: dqnHist,
+      batchActive: this.batchActive,
+      batchStageLabel,
       error: this.errorMessage,
       qLearningSummary: this.qAgent.getSummary(),
       dqnSummary: this.dqnAgent.getSummary(),
     };
   }
 
-  async startTraining(config: RLTrainingConfig): Promise<TrainingSessionSnapshot> {
-    if (this.loopRunning) {
-      this.stopRequested = true;
-      await new Promise((r) => setTimeout(r, 30));
-    }
-
-    const safeEpisodes = Math.max(1, Math.min(500, Math.floor(config.episodes)));
-    const safeProcs = Math.max(1, Math.min(SYSTEM_CONFIG.MAX_PROCESSES, Math.floor(config.numProcesses)));
-
-    this.activeConfig = {
-      ...config,
-      episodes: safeEpisodes,
-      numProcesses: safeProcs,
-    };
-    this.currentEpisode = 0;
-    this.totalEpisodes = safeEpisodes;
-    this.history = [];
-    this.errorMessage = null;
-    this.pauseRequested = false;
-    this.stopRequested = false;
-
+  private async prepareAgentForConfig(config: RLTrainingConfig): Promise<string | null> {
     if (config.agentType === 'DQN') {
       const status = await this.dqnAgent.initialize(config.seed);
       if (!status.available) {
-        this.state = 'ERROR';
-        this.errorMessage =
-          status.error ?? 'TensorFlow.js DQN backend unavailable; cannot train DQN.';
-        return this.getSnapshot();
+        return status.error ?? 'TensorFlow.js DQN backend unavailable; cannot train DQN.';
       }
       this.dqnAgent.configure(
         {
@@ -120,6 +114,114 @@ export class TrainingEngine {
         },
         config.seed
       );
+    }
+    return null;
+  }
+
+  async startTraining(config: RLTrainingConfig): Promise<TrainingSessionSnapshot> {
+    if (this.loopRunning) {
+      this.stopRequested = true;
+      await new Promise((r) => setTimeout(r, 30));
+    }
+
+    const safeEpisodes = Math.max(1, Math.min(500, Math.floor(config.episodes)));
+    const safeProcs = Math.max(1, Math.min(SYSTEM_CONFIG.MAX_PROCESSES, Math.floor(config.numProcesses)));
+
+    this.activeConfig = {
+      ...config,
+      episodes: safeEpisodes,
+      numProcesses: safeProcs,
+    };
+    this.queuedConfigs = [];
+    this.batchActive = false;
+    this.batchStageIndex = 1;
+    this.batchTotalStages = 1;
+    this.currentEpisode = 0;
+    this.totalEpisodes = safeEpisodes;
+    this.history = [];
+    this.errorMessage = null;
+    this.pauseRequested = false;
+    this.stopRequested = false;
+
+    const initErr = await this.prepareAgentForConfig(this.activeConfig);
+    if (initErr) {
+      this.state = 'ERROR';
+      this.errorMessage = initErr;
+      return this.getSnapshot();
+    }
+
+    this.state = 'TRAINING';
+    void this.runTrainingLoop();
+    return this.getSnapshot();
+  }
+
+  async startTrainBoth(params: {
+    workloadType: WorkloadType;
+    numProcesses: number;
+    qEpisodes: number;
+    dqnEpisodes: number;
+    discountFactor: number;
+    seed: number;
+  }): Promise<TrainingSessionSnapshot> {
+    if (this.loopRunning) {
+      this.stopRequested = true;
+      await new Promise((r) => setTimeout(r, 30));
+    }
+
+    const safeProcs = Math.max(1, Math.min(SYSTEM_CONFIG.MAX_PROCESSES, Math.floor(params.numProcesses || 10)));
+    const safeQEp = Math.max(1, Math.min(500, Math.floor(params.qEpisodes || 30)));
+    const safeDqnEp = Math.max(1, Math.min(500, Math.floor(params.dqnEpisodes || 15)));
+    const gamma = Math.max(0.1, Math.min(0.999, Number(params.discountFactor || 0.95)));
+    const seed = Math.floor(params.seed || 42);
+
+    const qCfg: RLTrainingConfig = {
+      agentType: 'Q_LEARNING',
+      workloadType: params.workloadType,
+      numProcesses: safeProcs,
+      episodes: safeQEp,
+      learningRate: 0.15,
+      discountFactor: gamma,
+      epsilonStart: 1.0,
+      epsilonDecay: 0.93,
+      epsilonMin: 0.05,
+      batchSize: 32,
+      targetUpdateFreq: 20,
+      seed,
+    };
+
+    const dqnCfg: RLTrainingConfig = {
+      agentType: 'DQN',
+      workloadType: params.workloadType,
+      numProcesses: safeProcs,
+      episodes: safeDqnEp,
+      learningRate: 0.001,
+      discountFactor: gamma,
+      epsilonStart: 1.0,
+      epsilonDecay: 0.89,
+      epsilonMin: 0.05,
+      batchSize: 32,
+      targetUpdateFreq: 20,
+      seed,
+    };
+
+    this.activeConfig = qCfg;
+    this.queuedConfigs = [dqnCfg];
+    this.batchActive = true;
+    this.batchStageIndex = 1;
+    this.batchTotalStages = 2;
+    this.currentEpisode = 0;
+    this.totalEpisodes = qCfg.episodes;
+    this.history = [];
+    this.errorMessage = null;
+    this.pauseRequested = false;
+    this.stopRequested = false;
+
+    const initErr = await this.prepareAgentForConfig(qCfg);
+    if (initErr) {
+      this.state = 'ERROR';
+      this.errorMessage = initErr;
+      this.batchActive = false;
+      return this.getSnapshot();
     }
 
     this.state = 'TRAINING';
@@ -149,6 +251,8 @@ export class TrainingEngine {
   stop(): TrainingSessionSnapshot {
     this.stopRequested = true;
     this.pauseRequested = false;
+    this.queuedConfigs = [];
+    this.batchActive = false;
     if (this.state === 'TRAINING' || this.state === 'PAUSED') {
       this.state = 'STOPPED';
     }
@@ -158,6 +262,8 @@ export class TrainingEngine {
   async resetAgent(agentType: RLAgentType, seed: number = 42): Promise<TrainingSessionSnapshot> {
     this.stopRequested = true;
     this.pauseRequested = false;
+    this.queuedConfigs = [];
+    this.batchActive = false;
     if (agentType === 'DQN') {
       await this.dqnAgent.reset(seed);
     } else {
@@ -178,31 +284,56 @@ export class TrainingEngine {
     this.loopRunning = true;
 
     try {
-      while (this.currentEpisode < this.totalEpisodes) {
-        if (this.stopRequested) {
-          this.state = 'STOPPED';
-          break;
-        }
-        if (this.pauseRequested) {
-          this.state = 'PAUSED';
-          break;
+      while (this.activeConfig) {
+        while (this.currentEpisode < this.totalEpisodes) {
+          if (this.stopRequested) {
+            this.state = 'STOPPED';
+            this.batchActive = false;
+            return;
+          }
+          if (this.pauseRequested) {
+            this.state = 'PAUSED';
+            return;
+          }
+
+          const episodeNumber = this.currentEpisode + 1;
+          const metric = this.runSingleEpisode(this.activeConfig, episodeNumber);
+          this.currentEpisode = episodeNumber;
+          this.history.push(metric);
+
+          // Yield to event loop so REST polling and live simulation stay responsive
+          await new Promise((resolve) => setTimeout(resolve, 4));
         }
 
-        const episodeNumber = this.currentEpisode + 1;
-        const metric = this.runSingleEpisode(this.activeConfig, episodeNumber);
-        this.currentEpisode = episodeNumber;
-        this.history.push(metric);
+        if (this.queuedConfigs.length > 0 && !this.stopRequested && !this.pauseRequested) {
+          const nextCfg = this.queuedConfigs.shift()!;
+          this.batchStageIndex += 1;
+          this.activeConfig = nextCfg;
+          this.currentEpisode = 0;
+          this.totalEpisodes = nextCfg.episodes;
+          this.history = [];
 
-        // Yield to event loop so REST polling and live simulation stay responsive
-        await new Promise((resolve) => setTimeout(resolve, 4));
+          const initErr = await this.prepareAgentForConfig(nextCfg);
+          if (initErr) {
+            this.state = 'ERROR';
+            this.errorMessage = initErr;
+            this.batchActive = false;
+            return;
+          }
+          continue;
+        }
+
+        break;
       }
 
       if (!this.stopRequested && !this.pauseRequested && this.currentEpisode >= this.totalEpisodes) {
         this.state = 'COMPLETED';
+        this.batchActive = false;
       }
     } catch (err) {
       this.state = 'ERROR';
       this.errorMessage = err instanceof Error ? err.message : String(err);
+      this.batchActive = false;
     } finally {
       this.loopRunning = false;
     }

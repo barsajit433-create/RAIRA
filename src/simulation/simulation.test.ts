@@ -23,6 +23,10 @@ import {
 } from '../reinforcement-learning/RewardCalculator';
 import { QLearningAgent } from '../reinforcement-learning/QLearningAgent';
 import { DQNAgent } from '../reinforcement-learning/DQNAgent';
+import {
+  getPretrainedDQNModel,
+  getPretrainedQLearningModel,
+} from '../reinforcement-learning/pretrainedModels';
 import { TrainingEngine } from '../reinforcement-learning/TrainingEngine';
 import { DEFAULT_REWARD_WEIGHTS, SYSTEM_CONFIG } from '../types/simulation';
 
@@ -302,3 +306,45 @@ test('TensorFlow.js DQN initializes (262 -> 256 -> 128 -> 97), runs SMDP trainin
   await restored.deserialize(checkpoint);
   assert.equal(restored.isTrained(), true);
 });
+
+test('Pretrained Q-Learning (50 ep) and DQN (25 ep) checkpoints hydrate cleanly and complete 10-process Mixed workload', async () => {
+  const qAgent = new QLearningAgent(undefined, 42);
+  qAgent.deserialize(getPretrainedQLearningModel());
+  assert.equal(qAgent.isTrained(), true);
+  assert.equal(qAgent.getSummary().episodesTrained, 50);
+  assert.equal(qAgent.getHistory().length, 50);
+
+  const dqnAgent = new DQNAgent(undefined, 42);
+  await dqnAgent.deserialize(getPretrainedDQNModel());
+  assert.equal(dqnAgent.isTrained(), true);
+  assert.equal(dqnAgent.getSummary().episodesTrained, 25);
+  assert.equal(dqnAgent.getHistory().length, 25);
+
+  const specs = generateWorkload('MIXED', 10, 42);
+  for (const alg of ['Q_LEARNING', 'DQN'] as const) {
+    const sim = new SimulationEngine();
+    sim.loadWorkload({ specs, workloadType: 'MIXED', seed: 42, algorithm: alg });
+    while (!sim.isDone()) {
+      if (alg === 'Q_LEARNING') {
+        const chosen = qAgent.selectAction({
+          processes: sim.getProcesses(),
+          currentTick: sim.getCurrentTick(),
+          availableRamMb: sim.resourceManager.getAvailableRamMb(),
+          totalRamMb: sim.resourceManager.totalRamMb,
+          prevTickCpuBusy: sim.getMetrics().currentCpuUtilisation > 0,
+          actionMask: sim.getActionMask(),
+          explore: false,
+        });
+        sim.stepAction(chosen.actionId, false);
+      } else {
+        const actionId = dqnAgent.selectAction(sim.getObservation(), sim.getActionMask(), false);
+        sim.stepAction(actionId, false);
+      }
+    }
+    const met = sim.getMetrics();
+    assert.equal(met.completedCount, 10, `${alg} should complete all 10 processes`);
+    assert.equal(met.invalidActionCount, 0, `${alg} must never emit invalid actions`);
+    assert.equal(met.currentRamUsedMb, 0, `${alg} must release all RAM upon completion`);
+  }
+});
+

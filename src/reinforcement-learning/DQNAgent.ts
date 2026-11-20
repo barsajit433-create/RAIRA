@@ -211,9 +211,10 @@ export class DQNAgent {
       return Array.from(output.dataSync());
     });
 
-    let bestAction = validActions[0];
+    const candidateActions = !explore && processActions.length > 0 ? processActions : validActions;
+    let bestAction = candidateActions[0];
     let bestValue = -Infinity;
-    for (const actionId of validActions) {
+    for (const actionId of candidateActions) {
       const val = qValues[actionId];
       if (val > bestValue) {
         bestValue = val;

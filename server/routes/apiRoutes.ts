@@ -8,6 +8,7 @@ import type { RLAgentType, RLTrainingConfig } from '../../src/types/reinforcemen
 export const apiRouter = Router();
 
 apiRouter.get('/health', async (_req, res) => {
+  await rairaService.ensureReady();
   const dqnStatus = await rairaService.dqnAgent.initialize();
   res.json({
     ok: true,
@@ -50,7 +51,8 @@ apiRouter.post('/workloads/generate', (req, res) => {
 });
 
 // ---- Simulation Engine ----
-apiRouter.get('/simulation/state', (_req, res) => {
+apiRouter.get('/simulation/state', async (_req, res) => {
+  await rairaService.ensureReady();
   res.json(rairaService.getSimulationSnapshot());
 });
 
@@ -137,7 +139,7 @@ apiRouter.post('/simulation/step', async (_req, res) => {
 
 // ---- RL Training Centre ----
 apiRouter.get('/rl/status', async (_req, res) => {
-  await rairaService.dqnAgent.initialize();
+  await rairaService.ensureReady();
   res.json(rairaService.getTrainingSnapshot());
 });
 
@@ -145,6 +147,22 @@ apiRouter.post('/rl/train/start', async (req, res) => {
   try {
     const config = req.body as RLTrainingConfig;
     const snapshot = await rairaService.startTraining(config);
+    res.json(snapshot);
+  } catch (err) {
+    res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
+  }
+});
+
+apiRouter.post('/rl/train/both', async (req, res) => {
+  try {
+    const snapshot = await rairaService.startTrainBoth({
+      workloadType: (req.body?.workloadType ?? 'MIXED') as WorkloadType,
+      numProcesses: Number(req.body?.numProcesses ?? 10),
+      qEpisodes: Number(req.body?.qEpisodes ?? 30),
+      dqnEpisodes: Number(req.body?.dqnEpisodes ?? 15),
+      discountFactor: Number(req.body?.discountFactor ?? 0.95),
+      seed: Number(req.body?.seed ?? 42),
+    });
     res.json(snapshot);
   } catch (err) {
     res.status(400).json({ error: err instanceof Error ? err.message : String(err) });
