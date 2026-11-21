@@ -123,14 +123,32 @@ export class RairaBackendService {
     rrQuantum?: number;
   }): SimulationSnapshot {
     this.stopAutoLoop();
-    const specs =
-      params.specs && params.specs.length > 0
-        ? params.specs
-        : generateWorkload(
-            params.workloadType === 'CUSTOM' ? 'MIXED' : params.workloadType,
-            params.numProcesses ?? 10,
-            params.seed
-          );
+    let specs: ProcessSpec[];
+    if (params.specs && params.specs.length > 0) {
+      const capped = params.specs.slice(0, SYSTEM_CONFIG.MAX_PROCESSES);
+      for (const spec of capped) {
+        const check = validateProcessInput(spec);
+        if (!check.valid) {
+          const firstErr = Object.values(check.errors)[0] ?? 'Invalid process specification.';
+          throw new Error(`${spec.name || spec.id || 'Process'}: ${firstErr}`);
+        }
+      }
+      specs = capped.map((s, idx) => ({
+        id: formatProcessId(idx),
+        slotIndex: idx,
+        name: s.name.trim(),
+        arrivalTime: s.arrivalTime,
+        cpuBurstTime: s.cpuBurstTime,
+        priority: s.priority,
+        memoryDemand: s.memoryDemand,
+      }));
+    } else {
+      specs = generateWorkload(
+        params.workloadType === 'CUSTOM' ? 'MIXED' : params.workloadType,
+        params.numProcesses ?? 10,
+        params.seed
+      );
+    }
 
     this.simulation.loadWorkload({
       specs,
@@ -160,9 +178,13 @@ export class RairaBackendService {
     }
 
     const normalized = capped.map((s, idx) => ({
-      ...s,
-      slotIndex: idx,
       id: formatProcessId(idx),
+      slotIndex: idx,
+      name: s.name.trim(),
+      arrivalTime: s.arrivalTime,
+      cpuBurstTime: s.cpuBurstTime,
+      priority: s.priority,
+      memoryDemand: s.memoryDemand,
     }));
 
     this.simulation.loadWorkload({

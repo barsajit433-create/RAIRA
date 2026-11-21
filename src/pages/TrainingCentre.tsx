@@ -235,6 +235,14 @@ export const TrainingCentre: React.FC<TrainingCentreProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     setFeedback(null);
+    if (file.size > 4 * 1024 * 1024) {
+      setFeedback({
+        tone: 'err',
+        text: 'Checkpoint file exceeds the 4 MB maximum allowed size.',
+      });
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
     try {
       const text = await file.text();
       const parsed = JSON.parse(text);

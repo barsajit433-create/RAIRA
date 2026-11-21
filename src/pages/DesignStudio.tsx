@@ -14,6 +14,7 @@ import {
   Sliders,
   Sparkles,
   Sun,
+  Trash2,
 } from 'lucide-react';
 import {
   Area,
@@ -39,6 +40,7 @@ interface DesignStudioProps {
   onLaunchDemo: () => void;
   onOpenWelcome: () => void;
   onRestartTour: () => void;
+  onClearAllLocalData: () => void;
 }
 
 const ThemeMiniaturePreview: React.FC<{ theme: ThemeDefinition }> = ({ theme }) => {
@@ -260,6 +262,7 @@ export const DesignStudio: React.FC<DesignStudioProps> = ({
   onLaunchDemo,
   onOpenWelcome,
   onRestartTour,
+  onClearAllLocalData,
 }) => {
   const {
     settings,
@@ -274,11 +277,21 @@ export const DesignStudio: React.FC<DesignStudioProps> = ({
   } = useTheme();
 
   const [resetFeedback, setResetFeedback] = useState(false);
+  const [confirmClearLocal, setConfirmClearLocal] = useState(false);
+  const [clearedLocalFeedback, setClearedLocalFeedback] = useState(false);
 
   const handleReset = () => {
     resetToDefaults();
     setResetFeedback(true);
     window.setTimeout(() => setResetFeedback(false), 2400);
+  };
+
+  const handleConfirmClearLocal = () => {
+    onClearAllLocalData();
+    resetToDefaults();
+    setConfirmClearLocal(false);
+    setClearedLocalFeedback(true);
+    window.setTimeout(() => setClearedLocalFeedback(false), 3000);
   };
 
   const telemetry = simulation?.telemetryHistory ?? [];
@@ -872,6 +885,14 @@ export const DesignStudio: React.FC<DesignStudioProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          {clearedLocalFeedback && (
+            <span
+              role="status"
+              className="text-xs font-medium text-[var(--status-success)] whitespace-nowrap"
+            >
+              Local browser data cleared
+            </span>
+          )}
           <button
             type="button"
             data-testid="settings-open-welcome-btn"
@@ -890,6 +911,35 @@ export const DesignStudio: React.FC<DesignStudioProps> = ({
             <Compass className="h-3.5 w-3.5" aria-hidden="true" />
             <span>Restart Guided Tour</span>
           </button>
+          {!confirmClearLocal ? (
+            <button
+              type="button"
+              data-testid="settings-clear-local-btn"
+              onClick={() => setConfirmClearLocal(true)}
+              className="inline-flex items-center gap-2 rounded-lg border border-red-500/35 bg-red-500/10 px-3.5 py-2 text-xs font-semibold text-red-700 dark:text-red-300 hover:bg-red-500/20 whitespace-nowrap cursor-pointer"
+            >
+              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>Clear Local Data</span>
+            </button>
+          ) : (
+            <div className="inline-flex items-center gap-2">
+              <button
+                type="button"
+                data-testid="settings-confirm-clear-local-btn"
+                onClick={handleConfirmClearLocal}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white px-3 py-2 text-xs font-semibold whitespace-nowrap cursor-pointer"
+              >
+                <span>Confirm Erase</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmClearLocal(false)}
+                className="raira-btn-secondary rounded-lg px-3 py-2 text-xs font-medium whitespace-nowrap cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
       </section>
     </div>

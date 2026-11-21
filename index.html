@@ -18,13 +18,21 @@
           var raw = window.localStorage.getItem('raira_design_studio_v21');
           if (!raw) return;
           var parsed = JSON.parse(raw);
-          var theme = parsed.themeId || 'mission-control';
-          var appearance = theme === 'cyber-lab' ? 'dark' : (parsed.appearance || (theme === 'academic-research' || theme === 'minimal-enterprise' ? 'light' : 'dark'));
+          if (!parsed || typeof parsed !== 'object') return;
+          var allowedThemes = ['mission-control', 'academic-research', 'cyber-lab', 'minimal-enterprise'];
+          var allowedAccents = ['cyan', 'blue', 'violet', 'emerald'];
+          var allowedDensities = ['spacious', 'compact'];
+          var theme = allowedThemes.indexOf(parsed.themeId) !== -1 ? parsed.themeId : 'mission-control';
+          var defaultAppearance = (theme === 'academic-research' || theme === 'minimal-enterprise') ? 'light' : 'dark';
+          var parsedAppearance = (parsed.appearance === 'dark' || parsed.appearance === 'light') ? parsed.appearance : defaultAppearance;
+          var appearance = theme === 'cyber-lab' ? 'dark' : parsedAppearance;
+          var accent = allowedAccents.indexOf(parsed.accentColor) !== -1 ? parsed.accentColor : 'cyan';
+          var density = allowedDensities.indexOf(parsed.layoutDensity) !== -1 ? parsed.layoutDensity : 'spacious';
           var root = document.documentElement;
           root.dataset.theme = theme;
           root.dataset.appearance = appearance;
-          root.dataset.accent = parsed.accentColor || 'cyan';
-          root.dataset.density = parsed.layoutDensity || 'spacious';
+          root.dataset.accent = accent;
+          root.dataset.density = density;
           root.classList.toggle('dark', appearance === 'dark');
           root.style.colorScheme = appearance;
         } catch (e) {}

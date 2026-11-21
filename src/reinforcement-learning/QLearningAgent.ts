@@ -335,22 +335,28 @@ export class QLearningAgent {
   }
 
   deserialize(data: SerializedQLearningModel): void {
-    if (!data || data.version !== 'raira-qtable-v1' || typeof data.qTable !== 'object') {
+    if (!data || data.version !== 'raira-qtable-v1' || typeof data.qTable !== 'object' || Array.isArray(data.qTable)) {
       throw new Error('Invalid Q-Learning model checkpoint format.');
     }
+    const entries = Object.entries(data.qTable);
+    if (entries.length > 50_000) {
+      throw new Error('Q-Learning checkpoint exceeds maximum supported table size.');
+    }
+    const forbidden = new Set(['__proto__', 'constructor', 'prototype']);
     this.qTable.clear();
     this.stateSet.clear();
-    for (const [k, v] of Object.entries(data.qTable)) {
+    for (const [k, v] of entries) {
+      if (forbidden.has(k) || k.length > 256) continue;
       if (typeof v === 'number' && Number.isFinite(v)) {
         this.qTable.set(k, v);
         const sep = k.indexOf('|');
         if (sep > 0) this.stateSet.add(k.slice(0, sep));
       }
     }
-    this.params = { ...DEFAULT_QLEARNING_PARAMS, ...data.config };
-    this.episodesTrained = data.episodesTrained ?? 0;
-    this.totalUpdates = data.totalUpdates ?? 0;
-    this.bestReward = data.bestReward ?? null;
-    this.history = Array.isArray(data.history) ? [...data.history] : [];
+    this.params = { ...DEFAULT_QLEARNING_PARAMS, ...(data.config ?? {}) };
+    this.episodesTrained = Number.isFinite(data.episodesTrained) ? Math.max(0, Math.floor(data.episodesTrained)) : 0;
+    this.totalUpdates = Number.isFinite(data.totalUpdates) ? Math.max(0, Math.floor(data.totalUpdates)) : 0;
+    this.bestReward = typeof data.bestReward === 'number' && Number.isFinite(data.bestReward) ? data.bestReward : null;
+    this.history = Array.isArray(data.history) ? data.history.slice(0, 500) : [];
   }
 }

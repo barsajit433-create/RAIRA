@@ -5,21 +5,53 @@ import type {
   StatisticalValidationReport,
 } from '../types/intelligence';
 
+export function sanitizeDownloadFilename(filename: string, requiredExt?: '.csv' | '.json'): string {
+  const base = String(filename ?? 'raira-export')
+    .replace(/[\u0000-\u001F\u007F]/g, '')
+    .replace(/[\\/:"*?<>|]+/g, '-')
+    .replace(/\.{2,}/g, '.')
+    .trim();
+  const safe = base.length > 0 ? base : 'raira-export';
+  if (requiredExt && !safe.toLowerCase().endsWith(requiredExt)) {
+    return `${safe}${requiredExt}`;
+  }
+  return safe;
+}
+
 function triggerFileDownload(content: string, filename: string, mimeType: string): void {
+  const safeName = sanitizeDownloadFilename(filename);
   const blob = new Blob([content], { type: mimeType });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = filename;
+  link.download = safeName;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function escapeCsvCell(value: unknown): string {
-  const str = value === null || value === undefined ? '' : String(value);
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+const CSV_FORMULA_PREFIX_RE = /^[=+\-@\t\r]/;
+
+/**
+ * RFC-4180 CSV cell escaping with OWASP CSV formula injection neutralization.
+ * Genuine finite JS numbers (including negative metrics like -12.4) stay numeric,
+ * while string cells starting with spreadsheet formula triggers (=, +, -, @, tab, CR)
+ * are prefixed with a single quote so spreadsheet apps treat them as literal text.
+ */
+export function escapeCsvCell(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? String(value) : '';
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false';
+  }
+  let str = String(value).replace(/\u0000/g, '');
+  if (CSV_FORMULA_PREFIX_RE.test(str.trimStart())) {
+    str = `'${str}`;
+  }
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;
@@ -28,12 +60,17 @@ function escapeCsvCell(value: unknown): string {
 export const exportService = {
   downloadJson(data: unknown, filename: string): void {
     const json = JSON.stringify(data, null, 2);
-    triggerFileDownload(json, filename.endsWith('.json') ? filename : `${filename}.json`, 'application/json');
+    triggerFileDownload(
+      json,
+      sanitizeDownloadFilename(filename, '.json'),
+      'application/json'
+    );
   },
 
   downloadCsv(rows: Record<string, unknown>[], filename: string): void {
+    const safeFile = sanitizeDownloadFilename(filename, '.csv');
     if (rows.length === 0) {
-      triggerFileDownload('', filename.endsWith('.csv') ? filename : `${filename}.csv`, 'text/csv;charset=utf-8;');
+      triggerFileDownload('', safeFile, 'text/csv;charset=utf-8;');
       return;
     }
     const headers = Object.keys(rows[0]);
@@ -41,11 +78,7 @@ export const exportService = {
       headers.map(escapeCsvCell).join(','),
       ...rows.map((row) => headers.map((h) => escapeCsvCell(row[h])).join(',')),
     ];
-    triggerFileDownload(
-      lines.join('\n'),
-      filename.endsWith('.csv') ? filename : `${filename}.csv`,
-      'text/csv;charset=utf-8;'
-    );
+    triggerFileDownload(lines.join('\n'), safeFile, 'text/csv;charset=utf-8;');
   },
 
   exportExperimentsCsv(records: ExperimentRecord[], filename = 'raira-experiments.csv'): void {

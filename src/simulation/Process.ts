@@ -10,10 +10,13 @@ export function validateProcessInput(input: {
 }): ProcessValidationResult {
   const errors: Record<string, string> = {};
 
-  if (!input.name || input.name.trim().length === 0) {
+  const trimmedName = typeof input.name === 'string' ? input.name.trim() : '';
+  if (trimmedName.length === 0) {
     errors.name = 'Process name is required.';
-  } else if (input.name.trim().length > 40) {
+  } else if (trimmedName.length > 40) {
     errors.name = 'Process name must be 40 characters or fewer.';
+  } else if (/[\u0000-\u001F\u007F]/.test(trimmedName)) {
+    errors.name = 'Process name must not contain control characters.';
   }
 
   if (!Number.isInteger(input.arrivalTime) || input.arrivalTime < 0 || input.arrivalTime > 500) {

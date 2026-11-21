@@ -170,4 +170,26 @@ export const experimentStorage = {
     safeWrite(SETTINGS_KEY, merged);
     return merged;
   },
+
+  clearAllLocalData(): void {
+    const keys = [
+      HISTORY_KEY,
+      COMPARISONS_KEY,
+      `${MODEL_PREFIX}Q_LEARNING`,
+      `${MODEL_PREFIX}DQN`,
+      SETTINGS_KEY,
+      SHOCK_REPORTS_KEY,
+      VALIDATION_REPORTS_KEY,
+      REWARD_CONFIGS_KEY,
+      'raira_design_studio_v21',
+      'raira_guest_session_v1',
+    ];
+    for (const k of keys) {
+      try {
+        window.localStorage.removeItem(k);
+      } catch {
+        // Ignore privacy mode restrictions
+      }
+    }
+  },
 };

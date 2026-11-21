@@ -457,6 +457,16 @@ export default function App() {
     setTourOpen(true);
   }, []);
 
+  const handleClearAllLocalData = useCallback(() => {
+    experimentStorage.clearAllLocalData();
+    setExperiments([]);
+    setLatestComparison(null);
+    setLatestValidationReport(null);
+    setStepIntervalMs(350);
+    const freshSession = guestSessionStorage.save(markEnteredAsGuest(guestSessionStorage.load()));
+    setGuestSession(freshSession);
+  }, []);
+
   if (showWelcome) {
     return (
       <WelcomeScreen
@@ -635,6 +645,7 @@ export default function App() {
               onLaunchDemo={handleLaunchDemo}
               onOpenWelcome={handleReopenWelcome}
               onRestartTour={handleRestartTour}
+              onClearAllLocalData={handleClearAllLocalData}
             />
           )}
         </main>
